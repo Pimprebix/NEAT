@@ -1,0 +1,41 @@
+#ifndef INNOVATIONBANK_H
+#define INNOVATIONBANK_H
+#include <map>
+#include <utility>
+#include <tuple>
+
+class InnovationBank {
+public:
+    static InnovationBank* instance ();
+    int getInnovationNumber ();
+//    std::tuple<int, int, int> getInnovationNumbersAndNodeId(int inputId, int outputId);
+    bool isInnovationNew(int inputId, int outputId);
+    void registerInnovation(int inputId, int outputId, int nodeId, int inputConnectionId, int outputConnectionId);
+private:
+    InnovationBank () : _id(0) {};
+
+    static InnovationBank* _address;
+    int _id;
+    std::map<std::pair<int, int>, std::tuple<int, int, int> > _innovationMap;
+};
+
+
+
+inline bool InnovationBank::isInnovationNew(int input, int output) {
+    return true;
+};
+
+inline void InnovationBank::registerInnovation(int inputId, int outputId, int newNodeId, int inputConnectionId, int outputConnectionId) {
+    std::pair<int, int> aIdPair = std::make_pair(inputId, outputId);
+    std::tuple<int, int, int> aTuple = std::make_tuple(newNodeId, inputConnectionId, outputConnectionId);
+    _innovationMap.insert(std::make_pair(aIdPair, aTuple));
+};
+
+
+inline int InnovationBank::getInnovationNumber() {
+    return _id++; 
+};
+
+
+
+#endif // INNOVATIONBANK_H
