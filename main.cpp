@@ -1,6 +1,5 @@
 #include <iostream>
 #include <stdio.h>
-#include <IDGenerator.h>
 #include "Genome.h"
 #include <vector>
 #include <string>
@@ -35,23 +34,38 @@ private:
 int main(int argc, char **argv)
 {
 //    Simulator aSimulator;
-    Genome aGenome(6, 10);
-    aGenome.buildMinimalStructure();
+    Genome aGenome(2, 1);
+    Genome aGenome2 = aGenome;
+    aGenome2.randomizeWeight();
     aGenome.nodeMutate();
     aGenome.nodeMutate();
     aGenome.nodeMutate();
     aGenome.nodeMutate();
+    aGenome.nodeMutate();
+    aGenome.nodeMutate();
+    aGenome.nodeMutate();
+    aGenome.nodeMutate();
+    aGenome2.nodeMutate();
+    aGenome2.nodeMutate();
+    aGenome2.nodeMutate();
+    aGenome2.nodeMutate();
+    aGenome2.nodeMutate();
+    aGenome2.nodeMutate();
+    aGenome2.nodeMutate();
     
-    vector<int> input = {1,8,1,8,4,1};
-    vector<int> output = aGenome.applyInput(input);
-    
+    vector<int> input = {1,8};
+    vector<float> output = aGenome.applyInput(input);
     
     for (int i  = 0; i<output.size();i++) {
         cerr << "output "<< i+1<< " = " << output.at(i) << endl;
     }    
     
-
-
+    cerr << "-------------------------------" <<endl;
     
+    vector<float> output2 = aGenome2.applyInput(input); 
+    for (int i  = 0; i<output2.size();i++) {
+        cerr << "output "<< i+1<< " = " << output2.at(i) << endl;
+    }  
+
 	return 0;
 };

@@ -15,6 +15,7 @@ Genome::Genome(int numberOfInputNode, int numberOfOuputNode) {
         _nodes.insert(_nodes.begin(), std::pair<int, NodeGene>(aNodeGene._id, aNodeGene));
         _outputLayer.push_back(aNodeGene._id);
     }
+    buildMinimalStructure();
 };
     
 void Genome::buildMinimalStructure() {
@@ -22,17 +23,18 @@ void Genome::buildMinimalStructure() {
     // every node should be linked
     
     // start with input layer
-    for (int const& aId: _inputLayer) {
-        // new random connection
-        _connections.push_back(ConnectionGene(aId, _outputLayer.at(rand()%_outputLayer.size()) ));            
+    for (int const& aId1: _inputLayer) {
+        for (int const& aId2: _outputLayer) {
+            _connections.push_back(ConnectionGene(aId1, aId2));       
+        }     
     }
     // verify all output node is linked
-    for (int const& aId: _outputLayer) {
-        // new random connection
-        if (!hasConnection(aId)) {
-            _connections.push_back(ConnectionGene(_inputLayer.at(rand()%_inputLayer.size()), aId ));
-        }           
-    }       
+//    for (int const& aId: _outputLayer) {
+//        // new random connection
+//        if (!hasConnection(aId)) {
+//            _connections.push_back(ConnectionGene(_inputLayer.at(rand()%_inputLayer.size()), aId ));
+//        }           
+//    }       
 };
 
 // fills inputs, set nodes to unused
@@ -49,7 +51,7 @@ void Genome::prepareNetwork(const vector<int>& input) {
 };
 
 // runs network!
-vector<int> Genome::applyInput(const vector<int>& input) {
+vector<float> Genome::applyInput(const vector<int>& input) {
     bool verbose = true;
     
     if (input.size() != _inputLayer.size()) {
@@ -124,7 +126,7 @@ vector<int> Genome::applyInput(const vector<int>& input) {
 
     
     // return output
-    vector<int> aOutput;
+    vector<float> aOutput;
     for (int const& aOutputNodeId: _outputLayer) {
         aOutput.push_back(_nodes[aOutputNodeId]._value);
     }
@@ -231,4 +233,8 @@ bool Genome::hasConnection(int aNodeId) {
     return (it!=_connections.end());
 };
 
-
+void Genome::randomizeWeight() {
+    for (ConnectionGene& aCon: _connections) {
+        aCon.setRandomWeight();
+    }
+};

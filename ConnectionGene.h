@@ -4,7 +4,7 @@
 
 class ConnectionGene : public Gene {
 public:
-    ConnectionGene(int aStart, int aEnd);
+    ConnectionGene(int aStart, int aEnd, int aInnovationNumber=-1);
 
     void setRandomWeight();
     void disable();

@@ -1,5 +1,7 @@
 #ifndef INNOVATIONBANK_H
 #define INNOVATIONBANK_H
+#include <iostream>
+#include <stdio.h>
 #include <map>
 #include <utility>
 #include <tuple>
@@ -19,11 +21,6 @@ private:
     std::map<std::pair<int, int>, std::tuple<int, int, int> > _innovationMap;
 };
 
-
-
-inline bool InnovationBank::isInnovationNew(int input, int output) {
-    return true;
-};
 
 inline void InnovationBank::registerInnovation(int inputId, int outputId, int newNodeId, int inputConnectionId, int outputConnectionId) {
     std::pair<int, int> aIdPair = std::make_pair(inputId, outputId);

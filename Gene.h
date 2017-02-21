@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <stdio.h>
-#include <IDGenerator.h>
 #include <vector>
 #include <string>
 #include <map>
@@ -11,15 +10,12 @@
 
 using namespace std;
 
-
-
 class Gene {
 public:
     Gene();
     void setUsed();
     void setUnused();
     bool isUsed();
-    int _id; // id
     float _value; // weight for connection / output for nodes 
 protected:
     bool _isUsed;

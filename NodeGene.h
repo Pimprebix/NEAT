@@ -4,7 +4,7 @@
 
 class NodeGene : public Gene {
 public:
-    NodeGene(string iType = "hidden"); 
+    NodeGene(string iType = "hidden", int aId = -1); 
     void reset();
     bool isHidden();
     int _id; // id

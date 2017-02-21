@@ -15,7 +15,7 @@ public:
     void buildMinimalStructure();
     
     // runs network!
-    vector<int> applyInput(const vector<int>& input);
+    vector<float> applyInput(const vector<int>& input);
 
     
     // MUTATIONS
@@ -30,6 +30,7 @@ public:
     // SETTER
     void setFitness(float iFitness);
     
+    void randomizeWeight();
 private:
     float _fitness;
     vector<int> _inputLayer; 
