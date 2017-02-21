@@ -52,7 +52,7 @@ void Genome::prepareNetwork(const vector<int>& input) {
 
 // runs network!
 vector<float> Genome::applyInput(const vector<int>& input) {
-    bool verbose = true;
+    bool verbose = false;
     
     if (input.size() != _inputLayer.size()) {
         cerr << "invalid input" << endl;
@@ -157,46 +157,49 @@ void Genome::nodeMutate() {
     while (!_connections.at(index)._enabled) {
         index = rand()%_connections.size();
     }        
+    
     // disable existing connection
     _connections.at(index).disable();
     
     // have we already faced the same structural innovation ?
     int inputId = _connections.at(index)._inputNodeId;
     int outputId = _connections.at(index)._outputNodeId;
+//    cerr << "mutating "<<inputId<< " <=== "<<outputId<< endl;
     
     InnovationBank* aInnovationBank = InnovationBank::instance();
     // if yes, retieve the innovation usin the pair input/output
     
+    std::tuple<int, int, int> aIdTuple = aInnovationBank->getInnovationNumbersAndNodeId(inputId, outputId);
+    // format : newNodeId, inputConnectionId, outputConnectionId)
+    
+    // add new gene
+    NodeGene aNodeGene("hidden", std::get<0>(aIdTuple)); // hidden by default
+    _nodes.insert(std::pair<int, NodeGene>(aNodeGene._id, aNodeGene));
+    _hiddenLayer.push_back(aNodeGene._id);
+    
+    // add new connections
+    ConnectionGene aConnection1(_connections.at(index)._inputNodeId, aNodeGene._id, std::get<1>(aIdTuple));
+    aConnection1._weight = 1.0;
+    _connections.push_back(aConnection1);
+    
+    ConnectionGene aConnection2(aNodeGene._id, _connections.at(index)._outputNodeId, std::get<2>(aIdTuple));
+    aConnection2._weight = _connections.at(index)._weight;
+    _connections.push_back(aConnection2);
     
     
+    // register if necessary the innovation
     if (aInnovationBank->isInnovationNew(inputId, outputId)) {
-        NodeGene aNodeGene("hidden"); // hidden by default
-        _nodes.insert(std::pair<int, NodeGene>(aNodeGene._id, aNodeGene));
-        _hiddenLayer.push_back(aNodeGene._id);
-        
-        // add new connections
-        ConnectionGene aConnection1(_connections.at(index)._inputNodeId, aNodeGene._id);
-        aConnection1._weight = 1.0;
-        _connections.push_back(aConnection1);
-        
-        ConnectionGene aConnection2(aNodeGene._id, _connections.at(index)._outputNodeId);
-        aConnection2._weight = _connections.at(index)._weight;
-        _connections.push_back(aConnection2);
-        
+//        cerr << "Innovation is new!" << endl;
         aInnovationBank->registerInnovation(
                             inputId, 
                             outputId, 
                             aNodeGene._id, 
                             aConnection1._innovationNumber, 
                             aConnection2._innovationNumber);
-        
     }
-    // if not 
-    else {
-        
-    }
-
-    
+//    else {
+//        cerr << "Innovation is NOT new!" << endl;
+//    }
 };
 // enable or disable connection
 void Genome::enableDisableMutate() {
@@ -236,5 +239,20 @@ bool Genome::hasConnection(int aNodeId) {
 void Genome::randomizeWeight() {
     for (ConnectionGene& aCon: _connections) {
         aCon.setRandomWeight();
+    }
+};
+
+void Genome::sortConnectionByInnovationNumber() {
+    std::sort(_connections.begin(),
+        _connections.end());
+};
+
+void Genome::display() const {
+//    sortConnectionByInnovationNumber();
+    for (const ConnectionGene& c: _connections) {
+        if (c._enabled) {
+            cerr << c._inputNodeId 
+            << " ===(" << c._weight << " / N-" <<c._innovationNumber <<")===> " << c._outputNodeId << endl;
+        }
     }
 };

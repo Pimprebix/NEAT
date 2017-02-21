@@ -5,7 +5,7 @@
 class ConnectionGene : public Gene {
 public:
     ConnectionGene(int aStart, int aEnd, int aInnovationNumber=-1);
-
+    bool operator< (const ConnectionGene& other) const;
     void setRandomWeight();
     void disable();
     void switchEnableDisable();
@@ -27,6 +27,8 @@ inline void ConnectionGene::disable() {
 inline void ConnectionGene::switchEnableDisable() {
     _enabled = !_enabled;  
 };
-
+inline bool ConnectionGene::operator< (const ConnectionGene& other) const {
+    return _innovationNumber<other._innovationNumber;
+};
 
 #endif // CONNECTIONGENE_H

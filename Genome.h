@@ -12,7 +12,12 @@ public:
     Genome() {};
     Genome(int numberOfInputNode, int numberOfOuputNode);
     
+    // UTILS
     void buildMinimalStructure();
+    void sortConnectionByInnovationNumber();
+    void display() const;
+    void randomizeWeight();
+    void setFitness(float iFitness);
     
     // runs network!
     vector<float> applyInput(const vector<int>& input);
@@ -26,11 +31,9 @@ public:
     void nodeMutate();
     // enable or disable connection
     void enableDisableMutate();
-        
-    // SETTER
-    void setFitness(float iFitness);
+    // coopulate
+    void crossOver(const Genome& other) const;    
     
-    void randomizeWeight();
 private:
     float _fitness;
     vector<int> _inputLayer; 
