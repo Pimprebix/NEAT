@@ -58,7 +58,8 @@ vector<float> Genome::applyInput(const vector<int>& input) {
     bool verbose = false;
     
     if (input.size() != _inputLayer.size()) {
-        cerr << "invalid input" << endl;
+        cerr << "invalid input : not enough input nodes or too much: entries number = "
+                << input.size() << " / input nodes number = " << _inputLayer.size() << endl;
     }
     else {
         prepareNetwork(input);
@@ -210,6 +211,7 @@ void Genome::enableDisableMutate() {
 };
 // crossOver 
 Genome Genome::crossOver(const Genome& fitest, const Genome& weakest, bool equal) {
+    cerr << " ---------- XOVER ---------" << endl;
     // the fitest will  be the model
     Genome aReturnedGenome;
      // build connections
@@ -245,10 +247,12 @@ Genome Genome::crossOver(const Genome& fitest, const Genome& weakest, bool equal
      // setp 2 : for each node found in connections, we add it
     for (const ConnectionGene& aCon : aReturnedGenome._connections) {
         if (!aReturnedGenome.isNodeRegistered(aCon._inputNodeId)) {
+            cerr << "fabien1 " << aCon._inputNodeId << endl;
             aReturnedGenome.addNode(aMapForFitest[aCon._inputNodeId]);
         }
         if (!aReturnedGenome.isNodeRegistered(aCon._outputNodeId)) {
-            aReturnedGenome.addNode(aMapForFitest[aCon._inputNodeId]);
+            cerr << "fabien2 " << aCon._outputNodeId << endl;
+            aReturnedGenome.addNode(aMapForFitest[aCon._outputNodeId]);
         }
      }
      

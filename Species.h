@@ -12,6 +12,7 @@ public:
     Species(int aId = -1);
     bool testGenomeForSpecies(const Genome& iGenome) const;
     void evalFitness(float (*foo) (const Genome&, const vector<int>&) );
+//    void orderByAdjustedFitness();
     void removeGenomeById(int id);
     void addGenome(Genome iGenome);
     Genome& getGenomeById(int aId) ;
@@ -29,12 +30,11 @@ inline bool Species::testGenomeForSpecies(const Genome& iGenome) const {
 };
 
 inline void Species::evalFitness(float (*foo) (const Genome&, const vector<int>&)  ) {
-    int i = 1;
     for (Genome& aGenome : _members) { 
-        cerr << "eval Fitness of genome " << i << endl;
+        cerr << "eval Fitness of genome " << aGenome._id << endl;
         float aFitness = foo(aGenome, {1,1});
         aGenome.setFitness(aFitness);
-        cerr << aFitness << endl;
+//        cerr << aFitness << endl;
         
         // adjusted fitness
         float counter = 0.0;
@@ -44,7 +44,6 @@ inline void Species::evalFitness(float (*foo) (const Genome&, const vector<int>&
             }
         }
         aGenome.setAdjustedFitness(aFitness / counter);
-        i++;
     }
 };
 
