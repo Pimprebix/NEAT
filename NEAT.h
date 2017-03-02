@@ -14,12 +14,14 @@ public:
         _fitnessFunction = foo;
         };
     void run();
+    Genome getBest();
 private:
     void assignToSpecies(Genome iGenome);
     void initialize();
     void evalFitness();
     void killWeakests();
-    void reproduceAndMutate();
+    void reproduce();
+    void mutate();
     Species& getSpeciesById(int id);
     
     std::vector<Species> _species;
@@ -39,9 +41,12 @@ inline void NEAT::setInitialPopulationSize(int iSize) {
 };
 
 inline void NEAT::evalFitness() {
+//    cerr << " Eval fitness ..." ;
     for (Species& aSpecies : _species) {
+//        cerr << " (in a species) " ;
         aSpecies.evalFitness(_fitnessFunction);
     }
+//    cerr << "... end." << endl;
 };
 
 inline void NEAT::killWeakests() {
@@ -58,16 +63,21 @@ inline void NEAT::killWeakests() {
             [] (const std::tuple<int, int, float, float>& t1, const std::tuple<int, int, float, float>& t2) { return get<3>(t1)<get<3>(t2);});
     
     
-//    for (const std::tuple<int, int, float, float>& t : _globalPopulation) {
-//        cerr << get<0>(t) << " " << get<1>(t) << " " << get<3>(t) << endl;
-//    }
-    
 // 2 - kill the least performing of all based on the killRate (so far)
     int numberOfVictims = abs(_globalPopulation.size() * _killRate);
     for (int i =0 ; i <= numberOfVictims; i++) {
-        cerr << "Remove genome " << get<0>(_globalPopulation.at(i)) << " from species " << get<1>(_globalPopulation.at(i)) << " / adjusted fitness = " << get<3>(_globalPopulation.at(i)) << endl;
+//        cerr << "Remove genome " << get<0>(_globalPopulation.at(i)) << " from species " << get<1>(_globalPopulation.at(i)) << " / adjusted fitness = " << get<3>(_globalPopulation.at(i)) << endl;
         getSpeciesById(get<1>(_globalPopulation.at(i))).removeGenomeById(get<0>(_globalPopulation.at(i)));
     }
+    
+    // remove empty species
+   _species.erase(
+        std::remove_if(
+            _species.begin(), 
+            _species.end(), 
+            [] (Species& aSpecies) { 
+                    return aSpecies._members.empty();}),
+        _species.end());
 
     std::reverse(_globalPopulation.begin(), _globalPopulation.end());
     // now best elements are first
@@ -76,25 +86,80 @@ inline void NEAT::killWeakests() {
     }
 };
 
-inline void NEAT::reproduceAndMutate()  {
+inline void NEAT::reproduce()  {
 //    _globalPopulation already exists and is sorted (best first)    
     int numberOfChildren = _initialPoolSize - _globalPopulation.size();
     for (int i = 0 ; i < numberOfChildren ; i++) {
         Species& aSpecies = getSpeciesById(get<1>(_globalPopulation.at(i)));
+        
         const Genome& aParent1 = aSpecies.getGenomeById(get<0>(_globalPopulation.at(i)));
         const Genome& aParent2 = aSpecies._members.at(rand()%aSpecies._members.size());
+        
         Genome aNewGenome = Genome::crossOver(aParent1, aParent2);
-        aSpecies.addGenome(aNewGenome);
+        
+        if(false) {
+            cerr << "parents: "<<endl;
+            aParent1.display();
+            aParent2.display();
+            cerr << "child: "<<endl;
+            aNewGenome.display();
+        }
+
+        // adoption mechanism
+        if (rand()%100 < _adoptionPercentage) {
+            assignToSpecies(aNewGenome);
+        }
+        else {
+            aSpecies.addGenome(aNewGenome);
+        }
+    }
+
+};
+
+inline void NEAT::mutate()  {
+    for (Species& s: _species) {
+        for (Genome& g: s._members) {
+            if (rand()%10==0) {
+                cerr << " node mutate " << endl;
+                g.nodeMutate();
+            }
+        }
     }
 };
 
 inline void NEAT::run() {
-  for (int generation = 0 ; generation < 10; generation++ ) {  //termination ?
+  for (int generation = 0 ; generation < 100; generation++ ) {  //termination ?
+    cerr << endl << " ********************** " << endl; 
+    cerr << " Generation : " << generation << endl; 
+    cerr << " Number of Species : " << _species.size() << endl; 
+    
+    cerr << " 1 - Eval fitness" << endl;
       evalFitness();  // done
+    cerr << " 2 - Kill weakests" << endl;
       killWeakests(); // done
-      reproduceAndMutate();
+    cerr << " 3 - Reproduce" << endl;
+      reproduce();
+    cerr << " 4 - Mutate " << endl;
+      mutate();
   }  
 };
+
+inline Genome NEAT::getBest() {
+    evalFitness();
+    Genome theBest;
+    theBest._fitness = -1000;
+    for (const Species& aSpecies: _species) {
+        for (const Genome& aGenome: aSpecies._members) {
+            if (aGenome._fitness > theBest._fitness) {
+                cerr << "found better : "<< aGenome._fitness;
+                theBest = aGenome;
+            }
+        }
+    }
+    theBest.display();
+    cerr << theBest._fitness << endl;
+    return theBest;
+}
 
 inline Species& NEAT::getSpeciesById(int aId) {
     auto it = find_if(

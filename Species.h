@@ -31,8 +31,8 @@ inline bool Species::testGenomeForSpecies(const Genome& iGenome) const {
 
 inline void Species::evalFitness(float (*foo) (const Genome&, const vector<int>&)  ) {
     for (Genome& aGenome : _members) { 
-        cerr << "eval Fitness of genome " << aGenome._id << endl;
-        float aFitness = foo(aGenome, {1,1});
+//        cerr << "eval Fitness of genome " << aGenome._id << endl;
+        float aFitness = foo(aGenome, {rand()%50,rand()%60});
         aGenome.setFitness(aFitness);
 //        cerr << aFitness << endl;
         

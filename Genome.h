@@ -47,7 +47,7 @@ public:
     // enable or disable connection
     void enableDisableMutate();
     // coopulate
-    static Genome crossOver(const Genome& fitest, const Genome& weakest, bool equal = true);    
+    static Genome crossOver(const Genome& fitest, const Genome& weakest, bool equal = false);    
     
     float _fitness;
     float _adjustedFitness;

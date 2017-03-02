@@ -57,6 +57,10 @@ void Genome::prepareNetwork(const vector<int>& input) {
 vector<float> Genome::applyInput(const vector<int>& input) {
     bool verbose = false;
     
+    if (verbose) {
+        display();
+    }
+    
     if (input.size() != _inputLayer.size()) {
         cerr << "invalid input : not enough input nodes or too much: entries number = "
                 << input.size() << " / input nodes number = " << _inputLayer.size() << endl;
@@ -211,7 +215,53 @@ void Genome::enableDisableMutate() {
 };
 // crossOver 
 Genome Genome::crossOver(const Genome& fitest, const Genome& weakest, bool equal) {
-    cerr << " ---------- XOVER ---------" << endl;
+//    cerr << " ---------- XOVER ---------" << endl;
+
+parents: 
+
+/*
+ Genome 129 ---------------------------- 
+List of input nodes  : 106 107 
+List of output nodes : 108 
+List of hidden nodes : 123 132 
+List of active connections : 
+107 ===(0 / N-3)===> 108
+123 ===(2 / N-5)===> 108
+106 ===(1 / N-10)===> 132
+132 ===(1 / N-11)===> 123
+List of inactive connections : 
+106 ===(2 / N-2)===> 108
+106 ===(1 / N-4)===> 123
+
+
+ Genome 126 ---------------------------- 
+List of input nodes  : 106 107 
+List of output nodes : 108 
+List of hidden nodes : 128 
+List of active connections : 
+106 ===(1 / N-2)===> 108
+107 ===(1 / N-8)===> 128
+128 ===(1 / N-9)===> 108
+List of inactive connections : 
+107 ===(1 / N-3)===> 108
+
+child: 
+
+ Genome 136 ---------------------------- 
+List of input nodes  : 106 107 
+List of output nodes : 108 
+List of hidden nodes : 123 137 
+List of active connections : 
+106 ===(1 / N-2)===> 108
+107 ===(0 / N-3)===> 108
+123 ===(2 / N-5)===> 108
+128 ===(1 / N-9)===> 108
+List of inactive connections : 
+106 ===(1 / N-4)===> 123
+*/
+
+
+
     // the fitest will  be the model
     Genome aReturnedGenome;
      // build connections
@@ -238,6 +288,10 @@ Genome Genome::crossOver(const Genome& fitest, const Genome& weakest, bool equal
         }
      }
      
+//     if (fitest._id == 129) {
+//        aReturnedGenome.display();
+//     }
+     
      // reconstruct nodes
      // step 1 : merge the 2 maps from fitest ans weakest
      map<int, NodeGene> aMapForFitest = fitest.getNodeMap();
@@ -247,11 +301,9 @@ Genome Genome::crossOver(const Genome& fitest, const Genome& weakest, bool equal
      // setp 2 : for each node found in connections, we add it
     for (const ConnectionGene& aCon : aReturnedGenome._connections) {
         if (!aReturnedGenome.isNodeRegistered(aCon._inputNodeId)) {
-            cerr << "fabien1 " << aCon._inputNodeId << endl;
             aReturnedGenome.addNode(aMapForFitest[aCon._inputNodeId]);
         }
         if (!aReturnedGenome.isNodeRegistered(aCon._outputNodeId)) {
-            cerr << "fabien2 " << aCon._outputNodeId << endl;
             aReturnedGenome.addNode(aMapForFitest[aCon._outputNodeId]);
         }
      }
@@ -312,9 +364,30 @@ void Genome::sortConnectionByInnovationNumber() {
 
 void Genome::display() const {
 //    sortConnectionByInnovationNumber();
-    cerr << " Genome ---------------------------- " <<endl;
+    cerr << endl << " Genome " << _id << " ---------------------------- " << endl 
+        << "List of input nodes  : ";
+    for (int n : _inputLayer) {
+        cerr << n << " " ;
+    }
+    cerr << endl << "List of output nodes : ";
+    for (int n : _outputLayer) {
+        cerr << n << " " ;
+    }
+    cerr << endl << "List of hidden nodes : ";
+    for (int n : _hiddenLayer) {
+        cerr << n << " " ;
+    }
+    cerr << endl<< "List of active connections : "<<endl;
+    
     for (const ConnectionGene& c: _connections) {
         if (c._enabled) {
+            cerr << c._inputNodeId 
+            << " ===(" << c._weight << " / N-" <<c._innovationNumber <<")===> " << c._outputNodeId << endl;
+        }
+    }
+    cerr << "List of inactive connections : "<<endl;
+        for (const ConnectionGene& c: _connections) {
+        if (!c._enabled) {
             cerr << c._inputNodeId 
             << " ===(" << c._weight << " / N-" <<c._innovationNumber <<")===> " << c._outputNodeId << endl;
         }

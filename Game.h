@@ -15,6 +15,6 @@ public:
         // here the goal is to get a network to compute sin(a)*sin(b)
         float expected = sin(input.at(0)) * sin(input.at(1));
         
-        return 1 - abs(aPrediciton.front() - expected);
+        return 1 - std::abs(aPrediciton.front() - expected);
     };
 };

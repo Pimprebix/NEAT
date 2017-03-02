@@ -1,8 +1,8 @@
-#include "Game.h"
-#include <vector>
-#include <cmath>
-
-//class Game {
+//#include "Game.h"
+//#include <vector>
+//#include <cmath>
+//
+////class Game {
 //    std::vector<int> getNextTurn (int x, int y, int vx, int vy, int angle) {
 //        // get real angle
 //        int angleRequested = angle;
