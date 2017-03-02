@@ -1,14 +1,13 @@
-#include "NodeGene.h"
+#include "Species.h"
 #include "IDGenerator.h"
 
-NodeGene::NodeGene(string iType, int aId)
-{
+float Species::THRESHOLD = 3.0;
+
+Species::Species(int aId) {
     if (aId == -1) {
         _id = IDGenerator::instance()->getId();
     }
     else {
         _id = aId;
     }
-    _type = iType;
-}
-
+};

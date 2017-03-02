@@ -1,40 +1,43 @@
 #include "Genome.h"
 #include "InnovationBank.h"
+#include "IDGenerator.h"
 
 
-Genome::Genome(int numberOfInputNode, int numberOfOuputNode) {
+Genome::Genome(int id) {
+    if (id == -1) {
+        getNewId();
+    }
+    else {
+        _id = id;
+    }
+}
+
+Genome::Genome(int numberOfInputNode, int numberOfOuputNode, int id) {
     // add input nodes
     for(int i=0; i<numberOfInputNode; i++) {
-        NodeGene aNodeGene("input");
-        _nodes.insert(_nodes.begin(), std::pair<int, NodeGene>(aNodeGene._id, aNodeGene));
-        _inputLayer.push_back(aNodeGene._id);
+        addNode(NodeGene("input"));
     }
     // add output nodes
     for(int i=0; i<numberOfOuputNode; i++) {
-        NodeGene aNodeGene("ouput");
-        _nodes.insert(_nodes.begin(), std::pair<int, NodeGene>(aNodeGene._id, aNodeGene));
-        _outputLayer.push_back(aNodeGene._id);
+        addNode(NodeGene("output"));
     }
-    buildMinimalStructure();
-};
-    
-void Genome::buildMinimalStructure() {
-    // we want a minimal structure : add connections randomly
-    // every node should be linked
-    
-    // start with input layer
+    // buildMinimalStructure();
     for (int const& aId1: _inputLayer) {
         for (int const& aId2: _outputLayer) {
             _connections.push_back(ConnectionGene(aId1, aId2));       
         }     
+    }    
+    // set id
+    if (id == -1) {
+        getNewId();
     }
-    // verify all output node is linked
-//    for (int const& aId: _outputLayer) {
-//        // new random connection
-//        if (!hasConnection(aId)) {
-//            _connections.push_back(ConnectionGene(_inputLayer.at(rand()%_inputLayer.size()), aId ));
-//        }           
-//    }       
+    else {
+        _id = id;
+    }
+};
+
+void Genome::getNewId() {
+    _id = IDGenerator::instance()->getId();
 };
 
 // fills inputs, set nodes to unused
@@ -44,7 +47,7 @@ void Genome::prepareNetwork(const vector<int>& input) {
         aPairIntNode.second.reset();
     }
     // fill inputs layer
-    for (int i=0; i<_inputLayer.size(); i++) {
+    for (unsigned int i=0; i<_inputLayer.size(); i++) {
         _nodes[_inputLayer.at(i)]._value = input.at(i);
         _nodes[_inputLayer.at(i)].setUsed();
     }
@@ -205,12 +208,59 @@ void Genome::nodeMutate() {
 void Genome::enableDisableMutate() {
     _connections.at(rand()%_connections.size()).switchEnableDisable();
 };
-    
-// SETTER
-void Genome::setFitness(float iFitness) {
-  _fitness = iFitness;
+// crossOver 
+Genome Genome::crossOver(const Genome& fitest, const Genome& weakest, bool equal) {
+    // the fitest will  be the model
+    Genome aReturnedGenome;
+     // build connections
+     for (ConnectionGene aCon : fitest._connections) {
+         // common connections are inherited randomley from the parents 
+         if (weakest.hasConnectionId(aCon._innovationNumber)) {  
+             if (rand()%2 == 0) {  // get from weakest
+                 aCon = weakest.getConnectionFromInnovationNumber(aCon._innovationNumber);
+             }
+            aReturnedGenome.addConnection(aCon);
+         }
+         // nodes in excess or  disjoint:
+         // - equal fitness = take randomly 50% chance
+         // - or : take from fitest
+         else  if (!equal || (rand()%2 == 0)) {
+            aReturnedGenome.addConnection(aCon);
+         }
+     }
+     if (equal) {
+        for (ConnectionGene aCon : weakest._connections) {
+            if (!fitest.hasConnectionId(aCon._innovationNumber) && (rand()%2 == 0)) { 
+                 aReturnedGenome.addConnection(aCon);
+            }
+        }
+     }
+     
+     // reconstruct nodes
+     // step 1 : merge the 2 maps from fitest ans weakest
+     map<int, NodeGene> aMapForFitest = fitest.getNodeMap();
+     map<int, NodeGene> aMapForWeakest = fitest.getNodeMap();
+     aMapForFitest.insert(aMapForWeakest.begin(), aMapForWeakest.end());
+     
+     // setp 2 : for each node found in connections, we add it
+    for (const ConnectionGene& aCon : aReturnedGenome._connections) {
+        if (!aReturnedGenome.isNodeRegistered(aCon._inputNodeId)) {
+            aReturnedGenome.addNode(aMapForFitest[aCon._inputNodeId]);
+        }
+        if (!aReturnedGenome.isNodeRegistered(aCon._outputNodeId)) {
+            aReturnedGenome.addNode(aMapForFitest[aCon._inputNodeId]);
+        }
+     }
+     
+     // apply 25% chances to reactivate disabled genes
+     for (ConnectionGene& aCon : aReturnedGenome._connections) {
+         if (!aCon._enabled && rand()%4==0) {
+             aCon.switchEnableDisable();
+         }
+     }
+     
+     return aReturnedGenome;
 };
-
 
 // return a map  first=id of upper node,  second=pointer to connection
 map<int, ConnectionGene*> Genome::getUpperNode(int aNodeId) {
@@ -226,13 +276,22 @@ map<int, ConnectionGene*> Genome::getUpperNode(int aNodeId) {
     return mapOfNodesIdAndConnection;
 };
 
-bool Genome::hasConnection(int aNodeId) {
+bool Genome::hasConnectionWith(int aNodeId) const {
     auto it = find_if(
             _connections.begin(), 
             _connections.end(), 
             [aNodeId] (const ConnectionGene& aConnnectionGene) { 
                     return aConnnectionGene._inputNodeId == aNodeId 
                         || aConnnectionGene._outputNodeId == aNodeId;});
+    return (it!=_connections.end());
+};
+
+bool Genome::hasConnectionId(int aConId) const {
+    auto it = find_if(
+            _connections.begin(), 
+            _connections.end(), 
+            [aConId] (const ConnectionGene& aConnnectionGene) { 
+                    return aConnnectionGene._innovationNumber == aConId;});
     return (it!=_connections.end());
 };
 
@@ -249,10 +308,12 @@ void Genome::sortConnectionByInnovationNumber() {
 
 void Genome::display() const {
 //    sortConnectionByInnovationNumber();
+    cerr << " Genome ---------------------------- " <<endl;
     for (const ConnectionGene& c: _connections) {
         if (c._enabled) {
             cerr << c._inputNodeId 
             << " ===(" << c._weight << " / N-" <<c._innovationNumber <<")===> " << c._outputNodeId << endl;
         }
     }
+    cerr << endl;
 };

@@ -1,8 +1,14 @@
 #ifndef CONNECTIONGENE_H
 #define CONNECTIONGENE_H
-#include "Gene.h"
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <string>
+#include <map>
+#include <algorithm>
 
-class ConnectionGene : public Gene {
+using namespace std;
+class ConnectionGene {
 public:
     ConnectionGene(int aStart, int aEnd, int aInnovationNumber=-1);
     bool operator< (const ConnectionGene& other) const;

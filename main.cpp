@@ -1,38 +1,21 @@
 #include <iostream>
-#include <stdio.h>
-#include <vector>
-#include <string>
-#include <map>
-#include <algorithm>
 #include "NEAT.h"
+#include "Game.h"
 
 using namespace std;
 
 
 int main(int argc, char **argv)
 {
-//    Simulator aSimulator;
-//    Genome aGenome(2, 1);
-//    Genome aGenome2 = aGenome;
-//    aGenome2.randomizeWeight();
-//    aGenome.nodeMutate();
-//    aGenome2.nodeMutate();
-//    
-//    vector<int> input = {1,8};
-//    vector<float> output = aGenome.applyInput(input);
-//    
-//    for (int i  = 0; i<output.size();i++) {
-//        cerr << "output "<< i+1<< " = " << output.at(i) << endl;
-//    }    
-//    
-//    cerr << "-------------------------------" <<endl;
-//    
-//    vector<float> output2 = aGenome2.applyInput(input); 
-//    for (int i  = 0; i<output2.size();i++) {
-//        cerr << "output "<< i+1<< " = " << output2.at(i) << endl;
-//    }  
-//    
-    NEAT aNeat(2,3,100);
-
+    NEAT aNeat(2,1);
+    // we can set the mutation step
+    // write here all additional parameters we need (popSize, verbose, options for speciation etc)
+//    aNeat.setVerboseMode(false);
+//    aNeat.setTerminationAfternbOfTurns(1000);
+    aNeat.setInitialPopulationSize(10);
+    aNeat.setFitnessFunction(&Game::evalSolution);
+    aNeat.run();
+//    aNeat.getBest();
+    
 	return 0;
 };
