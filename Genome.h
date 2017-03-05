@@ -1,6 +1,7 @@
 #ifndef GENOME_H
 #define GENOME_H
 #include "ConnectionGene.h"
+#include "IDGenerator.h"
 #include "NodeGene.h"
 #include <vector>
 #include <string>
@@ -13,17 +14,26 @@ public:
     Genome(int numberOfInputNode, int numberOfOuputNode, int id = -1);
     
     // UTILS
-    int _id;
     void getNewId();
-    void sortConnectionByInnovationNumber();
-    void display() const;
     void randomizeWeight();
+    void display() const;
+    void printCPP() const;
+    
+    // sorting
+    void sortConnectionByInnovationNumber();
+    void sortAllNodes();
+    
+    // setters
     void setFitness(float iFitness);
     void setAdjustedFitness(float adjustmentFactor);
+    
+    map<int, vector<ConnectionGene> > getNodeIncomingConnectionMap() const;
     map<int, NodeGene> getNodeMap() const;
+    
+    // add elements to Genome
     void addConnection(ConnectionGene iCon);
-    void addNode(NodeGene iNode);
-    bool isNodeRegistered(int aNodeId) const;
+    void addNode(NodeGene iNode, int insertAfterNode=-1);
+    
     ConnectionGene getConnectionFromInnovationNumber(int nb) const;
     static float getDistance(const Genome&  iGenome1, const Genome& iGenome2);    
     static void getTopologicalComparision(const Genome&  iGenome1, 
@@ -35,36 +45,42 @@ public:
                                             vector<int>& excessInGenome2);
     
     // runs network!
-    vector<float> applyInput(const vector<int>& input);
+    vector<float> applyInput(const vector<float>& input);
 
     
     // MUTATIONS
-    void mutateOrNot(int forPointMutate, int forNodeMutate, int forEnableDisableMutate);
     // pointMutate modifies a weight radomly or according to a step
     void pointMutate();
     // nodeMutate silence a connection and adds a connection between the 2 nodes adding 1 new intermediary node 
     void nodeMutate();
     // enable or disable connection
     void enableDisableMutate();
-    // coopulate
+    // ConnectionCreate creates a connection between 2 nodes
+    void createConnection();
+    // crossover
     static Genome crossOver(const Genome& fitest, const Genome& weakest, bool equal = false);    
     
+    // attributes
+    int _id;
     float _fitness;
     float _adjustedFitness;
+    
 private:
+    int _maxInnovationNumber;
+    
+    // collections of Ids:
     vector<int> _inputLayer; 
     vector<int> _outputLayer; 
     vector<int> _hiddenLayer; 
+    vector<int> _allNodes;
+    
     map<int, NodeGene> _nodes; 
     vector<ConnectionGene> _connections; 
     
-    
-    void prepareNetwork(const vector<int>& input);
-    // return a map  first=id of upper node,  second=pointer to connection
-    map<int, ConnectionGene*> getUpperNode(int aNodeId);
-    // check if a node has connection
-    bool hasConnectionWith(int aNodeId) const;
+    // check if a node has connection or exists
+    bool hasConnectionWithNodeId(int aNodeId) const;
     bool hasConnectionId(int aConId) const;
+    bool isNodeRegistered(int aNodeId) const;
 };
 
 inline void Genome::addConnection(ConnectionGene iCon) {
@@ -86,15 +102,22 @@ inline map<int, NodeGene> Genome::getNodeMap() const {
 };
 
 inline bool Genome::isNodeRegistered(int iNodeId) const {
-    return _nodes.find(iNodeId) != _nodes.end();
+//    auto it = std::find(_nodes.begin(), _nodes.end(), iNodeId)
+    return std::find(_allNodes.begin(), _allNodes.end(), iNodeId) != _allNodes.end();
 };
 
-inline void Genome::addNode(NodeGene iNode) {
+inline void Genome::addNode(NodeGene iNode, int insertAfterNode) {
     _nodes.insert(std::pair<int, NodeGene>(iNode._id, iNode));
-    if (iNode.isInput())  {
+    
+    auto it = find (_allNodes.begin(), _allNodes.end(), insertAfterNode);
+    if (it!=_allNodes.end()) {it++;}
+    
+    _allNodes.insert(it, iNode._id); // insert at the end by default
+    
+    if (iNode.isInput() || iNode.isBias())  {
         _inputLayer.push_back(iNode._id);
     } 
-    else if (iNode.isOuput())  {
+    else if (iNode.isOutput())  {
         _outputLayer.push_back(iNode._id);
     } 
     else {
@@ -151,6 +174,11 @@ inline float Genome::getDistance(const Genome&  iGenome1, const Genome& iGenome2
     return aReturnedDistance;
 };
 
+inline void Genome::sortConnectionByInnovationNumber() {
+    std::sort(_connections.begin(),
+        _connections.end());
+};
+
 inline void Genome::getTopologicalComparision(const Genome&  iGenome1, 
                                         const Genome& iGenome2, 
                                         vector<int>& commonGenes,
@@ -158,23 +186,7 @@ inline void Genome::getTopologicalComparision(const Genome&  iGenome1,
                                         vector<int>& disjointInGenome2,
                                         vector<int>& excessInGenome1,
                                         vector<int>& excessInGenome2) {
-    // compute max
-    int maxInnovNumberG1 = 0;
-    int maxInnovNumberG2 = 0;
-    for (const ConnectionGene& aCon: iGenome1._connections) {
-        // register new max if necessary
-        if (maxInnovNumberG1<aCon._innovationNumber) {
-            maxInnovNumberG1 = aCon._innovationNumber;
-        }
-    }
-    for (const ConnectionGene& aCon: iGenome2._connections) {
-        // register new max if necessary
-        if (maxInnovNumberG2<aCon._innovationNumber) {
-            maxInnovNumberG2 = aCon._innovationNumber;
-        }
-    }
-    int minMaxInnovNumber = min(maxInnovNumberG1, maxInnovNumberG2);
-    
+    int minMaxInnovNumber = min(iGenome1._maxInnovationNumber, iGenome2._maxInnovationNumber);
     
     for (const ConnectionGene& aCon: iGenome1._connections) {  
         // check if it's common
@@ -201,4 +213,7 @@ inline void Genome::getTopologicalComparision(const Genome&  iGenome1,
     }
 };
 
+inline void Genome::getNewId() {
+    _id = IDGenerator::instance()->getId();
+};
 #endif // GENOME_H

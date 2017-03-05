@@ -15,6 +15,7 @@ public:
     void setRandomWeight();
     void disable();
     void switchEnableDisable();
+    void pointMutate();
     
     int _inputNodeId;
     int _outputNodeId;
@@ -23,9 +24,21 @@ public:
     int _innovationNumber;
 };
 
-
+inline void ConnectionGene::pointMutate() {
+    int r = rand()%4;
+    if (r == 0) {
+        _weight += 0.1;
+    }
+    else if (r == 1) {
+        _weight -= 0.1;
+    }
+    else {
+//        _weight += (float(rand()%400)/100. - 2.0);
+        setRandomWeight();
+    }
+};
 inline void ConnectionGene::setRandomWeight() {
-    _weight = float(rand()%5) - 2.0;
+    _weight = (float(rand()%400)/100. - 2.0);
 };
 inline void ConnectionGene::disable() {
     _enabled = false;  

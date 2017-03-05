@@ -9,23 +9,28 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-    NEAT aNeat(2,1);
-    // we can set the mutation step
-    // write here all additional parameters we need (popSize, verbose, options for speciation etc)
-//    aNeat.setVerboseMode(false);
-//    aNeat.setTerminationAfternbOfTurns(1000);
+    NEAT aNeat(1,1);
     aNeat.setInitialPopulationSize(100);
+    aNeat.setNbOfGenerations(400);
     aNeat.setFitnessFunction(&Game::evalSolution);
-    aNeat.run();
-    
-    
+
+    aNeat.run();   
     Genome g = aNeat.getBest();
-    
-    int a = 39;
-    int b = 30;
-    cerr << "RESULTS FOR a = " << a << " / b = " << b 
-    << ". Error: " << g.applyInput({a,b}).at(0) - (sin(a) * sin(b)) <<endl;
-//    aNeat.getBest();
+    g.display();
+
+
+    float angle;
+    float aPrediction;
+    float anExpectedResult;
+    for (int i = 0; i < 360; i++) {
+        angle = float(i - 180) * 3.14159265359/180.; 
+        aPrediction = g.applyInput({angle}).at(0);
+        anExpectedResult = Game::f(angle);
+        cerr << aPrediction << endl;
+    }
+
+
+
     
 	return 0;
 };

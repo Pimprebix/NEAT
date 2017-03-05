@@ -2,10 +2,11 @@
 
 
 NEAT::NEAT(int nbInput, int nbOutput, int popSize) {
-    _nbInput = nbInput;
+    _nbInput = nbInput; // bias is considered as an input
     _nbOutput= nbOutput;
     _killRate = 0.20;
-    _adoptionPercentage = 10;
+    _nbOfGenerations = 100;
+    _adoptionPercentage = 1;
     setInitialPopulationSize(popSize);
 }
 

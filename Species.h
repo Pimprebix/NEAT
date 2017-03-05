@@ -11,7 +11,7 @@ public:
     
     Species(int aId = -1);
     bool testGenomeForSpecies(const Genome& iGenome) const;
-    void evalFitness(float (*foo) (const Genome&, const vector<int>&) );
+    void evalFitness(float (*foo) (const Genome&) );
 //    void orderByAdjustedFitness();
     void removeGenomeById(int id);
     void addGenome(Genome iGenome);
@@ -29,10 +29,10 @@ inline bool Species::testGenomeForSpecies(const Genome& iGenome) const {
     return Genome::getDistance(iGenome, aRefenceGenome) < THRESHOLD;
 };
 
-inline void Species::evalFitness(float (*foo) (const Genome&, const vector<int>&)  ) {
+inline void Species::evalFitness(float (*foo) (const Genome&)  ) {
     for (Genome& aGenome : _members) { 
 //        cerr << "eval Fitness of genome " << aGenome._id << endl;
-        float aFitness = foo(aGenome, {rand()%50,rand()%60});
+        float aFitness = foo(aGenome);
         aGenome.setFitness(aFitness);
 //        cerr << aFitness << endl;
         

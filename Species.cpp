@@ -1,7 +1,7 @@
 #include "Species.h"
 #include "IDGenerator.h"
 
-float Species::THRESHOLD = 1.0;
+float Species::THRESHOLD = 4.0;
 
 Species::Species(int aId) {
     if (aId == -1) {

@@ -21,10 +21,12 @@ Genome::Genome(int numberOfInputNode, int numberOfOuputNode, int id) {
     for(int i=0; i<numberOfOuputNode; i++) {
         addNode(NodeGene("output"));
     }
+    addNode(NodeGene("bias")); // will be stored in inputLayer
+    
     // buildMinimalStructure();
     for (int const& aId1: _inputLayer) {
         for (int const& aId2: _outputLayer) {
-            _connections.push_back(ConnectionGene(aId1, aId2));       
+            addConnection(ConnectionGene(aId1, aId2));       
         }     
     }    
     // set id
@@ -34,180 +36,73 @@ Genome::Genome(int numberOfInputNode, int numberOfOuputNode, int id) {
     else {
         _id = id;
     }
-};
-
-void Genome::getNewId() {
-    _id = IDGenerator::instance()->getId();
-};
-
-// fills inputs, set nodes to unused
-void Genome::prepareNetwork(const vector<int>& input) {
-    // clean network
-    for (auto& aPairIntNode : _nodes) { 
-        aPairIntNode.second.reset();
-    }
-    // fill inputs layer
-    for (unsigned int i=0; i<_inputLayer.size(); i++) {
-        _nodes[_inputLayer.at(i)]._value = input.at(i);
-        _nodes[_inputLayer.at(i)].setUsed();
-    }
-};
-
-// runs network!
-vector<float> Genome::applyInput(const vector<int>& input) {
-    bool verbose = false;
     
-    if (verbose) {
-        display();
-    }
-    
-    if (input.size() != _inputLayer.size()) {
-        cerr << "invalid input : not enough input nodes or too much: entries number = "
-                << input.size() << " / input nodes number = " << _inputLayer.size() << endl;
-    }
-    else {
-        prepareNetwork(input);
-    }
-    
-    // run graph:
-    
-    // first build a list of all nodes left to be computed:
-    vector<int> listOfNodesToCompute = _hiddenLayer;
-    for (int aNodeId: _outputLayer) {
-        listOfNodesToCompute.push_back(aNodeId);
-    }
-    
-    // we compute outputs 
-    while (!listOfNodesToCompute.empty()) {
-        vector<int> NodesThatCannotBeComputedYet;
-        
-        for (int aNodeId: listOfNodesToCompute) {
-            NodeGene& aNode = _nodes[aNodeId];
-            
-            // get the list of nodes that we need to compute our subject's value
-            bool areAllPreviousNodesComputed = true;
-            map<int, ConnectionGene*> upperNodeIds = getUpperNode(aNode._id);
-            
-            // check if all upper nodes are computed:
-            for (auto const& aPairIdConnector: upperNodeIds) {
-                if (!_nodes[aPairIdConnector.first].isUsed()) {
-                    areAllPreviousNodesComputed = false;
-                }
-            }
-            
-            // if so, compute the value:
-            if (areAllPreviousNodesComputed) {
-                if (verbose) {cerr << endl <<"computing value of node "<<aNode._id << endl;}
-                for (auto const& aPairIdConnector: upperNodeIds) {
-                    if (verbose) {
-                        cerr << " - node " << _nodes[aPairIdConnector.first]._id 
-                            << " is connected with value " 
-                            << _nodes[aPairIdConnector.first]._value 
-                            << " / weigth "
-                            << aPairIdConnector.second->_weight 
-                            << " (enabled = "
-                            << aPairIdConnector.second->_enabled
-                            << " )"
-                            << endl;
-                    }
-                    if (aPairIdConnector.second->_enabled) {                            
-                        aNode._value +=
-                                _nodes[aPairIdConnector.first]._value 
-                                * aPairIdConnector.second->_weight; 
-                    }
-                            
-                }
-                // if the node is hidden, apply sigmoid
-                if (aNode.isHidden()) {
-                    aNode._value = aNode._value / (1.0 + abs(aNode._value));
-                }
-                
-                if (verbose) {cerr << "Value = "<< aNode._value << endl;}
-                aNode.setUsed();
-            }
-            else {
-                NodesThatCannotBeComputedYet.push_back(aNode._id);
-            }
-        }
-        listOfNodesToCompute = NodesThatCannotBeComputedYet;
-    }
-
-    
-    // return output
-    vector<float> aOutput;
-    for (int const& aOutputNodeId: _outputLayer) {
-        aOutput.push_back(_nodes[aOutputNodeId]._value);
-    }
-    return aOutput;
+    _maxInnovationNumber = 0;
 };
 
 
-// MUTATIONS
-void Genome::mutateOrNot(int forPointMutate, int forNodeMutate, int forEnableDisableMutate) {
-    if (rand()%forPointMutate == 0) {
-        pointMutate();
-    }
-    if (rand()%forNodeMutate == 0) {
-        nodeMutate();
-    }
-    if (rand()%forEnableDisableMutate == 0) {
-        enableDisableMutate();
-    }
-};
+// MUTATIONS ////////////////////////////////////////
 // pointMutate modifies a weight radomly or according to a step
 void Genome::pointMutate() {
-    _connections.at(rand()%_connections.size()).setRandomWeight();
+    _connections.at(rand()%_connections.size()).pointMutate();
 };
 // nodeMutate silence a connection and adds a connection between the 2 nodes adding 1 new intermediary node 
 void Genome::nodeMutate() {
     // get connection enabled
     int index = rand()%_connections.size();
-    while (!_connections.at(index)._enabled) {
-        index = rand()%_connections.size();
-    }        
+    ConnectionGene& aConnection = _connections.at(index);
+//    while (!_connections.at(index)._enabled) {
+//        index = rand()%_connections.size();
+//    }        
     
     // disable existing connection
-    _connections.at(index).disable();
-    
+    aConnection.disable();
+
     // have we already faced the same structural innovation ?
-    int inputId = _connections.at(index)._inputNodeId;
-    int outputId = _connections.at(index)._outputNodeId;
-//    cerr << "mutating "<<inputId<< " <=== "<<outputId<< endl;
-    
     InnovationBank* aInnovationBank = InnovationBank::instance();
     // if yes, retieve the innovation usin the pair input/output
     
-    std::tuple<int, int, int> aIdTuple = aInnovationBank->getInnovationNumbersAndNodeId(inputId, outputId);
-    // format : newNodeId, inputConnectionId, outputConnectionId)
+    int inputNodeId = aConnection._inputNodeId;
+    int outputNodeId = aConnection._outputNodeId;
+    std::tuple<int, int, int, int> aIdTuple 
+        = aInnovationBank->getInnovationNumbersAndNodeId(
+            inputNodeId, 
+            outputNodeId);
+    // format : newNodeId, inputConnectionId, outputConnectionId, biasId)
+    
     
     // add new gene
     NodeGene aNodeGene("hidden", std::get<0>(aIdTuple)); // hidden by default
-    _nodes.insert(std::pair<int, NodeGene>(aNodeGene._id, aNodeGene));
-    _hiddenLayer.push_back(aNodeGene._id);
+    addNode(aNodeGene, inputNodeId); // we need to insert it right after the inputNodeId
     
     // add new connections
-    ConnectionGene aConnection1(_connections.at(index)._inputNodeId, aNodeGene._id, std::get<1>(aIdTuple));
+    ConnectionGene aConnection1(inputNodeId, aNodeGene._id, std::get<1>(aIdTuple));
     aConnection1._weight = 1.0;
     _connections.push_back(aConnection1);
-    
-    ConnectionGene aConnection2(aNodeGene._id, _connections.at(index)._outputNodeId, std::get<2>(aIdTuple));
-    aConnection2._weight = _connections.at(index)._weight;
+
+    ConnectionGene aConnection2(aNodeGene._id, outputNodeId, std::get<2>(aIdTuple));
+    aConnection2._weight = aConnection._weight;
     _connections.push_back(aConnection2);
     
+    // each hidden Node should be connected to a bias
+    ConnectionGene aConnection3(_inputLayer.back(), aNodeGene._id, std::get<3>(aIdTuple));
+    _connections.push_back(aConnection3);
+    
+    
+    // maximum innovation number to register (will be used for Xover)
+    _maxInnovationNumber = max({_maxInnovationNumber, aConnection1._innovationNumber, aConnection2._innovationNumber});
     
     // register if necessary the innovation
-    if (aInnovationBank->isInnovationNew(inputId, outputId)) {
+    if (aInnovationBank->isInnovationNew(inputNodeId, outputNodeId)) {
 //        cerr << "Innovation is new!" << endl;
         aInnovationBank->registerInnovation(
-                            inputId, 
-                            outputId, 
+                            inputNodeId,   // original connection
+                            outputNodeId,  // original connection
                             aNodeGene._id, 
                             aConnection1._innovationNumber, 
-                            aConnection2._innovationNumber);
+                            aConnection2._innovationNumber,
+                            aConnection3._innovationNumber );
     }
-//    else {
-//        cerr << "Innovation is NOT new!" << endl;
-//    }
 };
 // enable or disable connection
 void Genome::enableDisableMutate() {
@@ -215,53 +110,6 @@ void Genome::enableDisableMutate() {
 };
 // crossOver 
 Genome Genome::crossOver(const Genome& fitest, const Genome& weakest, bool equal) {
-//    cerr << " ---------- XOVER ---------" << endl;
-
-parents: 
-
-/*
- Genome 129 ---------------------------- 
-List of input nodes  : 106 107 
-List of output nodes : 108 
-List of hidden nodes : 123 132 
-List of active connections : 
-107 ===(0 / N-3)===> 108
-123 ===(2 / N-5)===> 108
-106 ===(1 / N-10)===> 132
-132 ===(1 / N-11)===> 123
-List of inactive connections : 
-106 ===(2 / N-2)===> 108
-106 ===(1 / N-4)===> 123
-
-
- Genome 126 ---------------------------- 
-List of input nodes  : 106 107 
-List of output nodes : 108 
-List of hidden nodes : 128 
-List of active connections : 
-106 ===(1 / N-2)===> 108
-107 ===(1 / N-8)===> 128
-128 ===(1 / N-9)===> 108
-List of inactive connections : 
-107 ===(1 / N-3)===> 108
-
-child: 
-
- Genome 136 ---------------------------- 
-List of input nodes  : 106 107 
-List of output nodes : 108 
-List of hidden nodes : 123 137 
-List of active connections : 
-106 ===(1 / N-2)===> 108
-107 ===(0 / N-3)===> 108
-123 ===(2 / N-5)===> 108
-128 ===(1 / N-9)===> 108
-List of inactive connections : 
-106 ===(1 / N-4)===> 123
-*/
-
-
-
     // the fitest will  be the model
     Genome aReturnedGenome;
      // build connections
@@ -288,17 +136,19 @@ List of inactive connections :
         }
      }
      
-//     if (fitest._id == 129) {
-//        aReturnedGenome.display();
-//     }
-     
      // reconstruct nodes
      // step 1 : merge the 2 maps from fitest ans weakest
      map<int, NodeGene> aMapForFitest = fitest.getNodeMap();
-     map<int, NodeGene> aMapForWeakest = fitest.getNodeMap();
+     map<int, NodeGene> aMapForWeakest = weakest.getNodeMap();
      aMapForFitest.insert(aMapForWeakest.begin(), aMapForWeakest.end());
      
-     // setp 2 : for each node found in connections, we add it
+     // step 2 : add input and output nodes
+     for (const int aInputNodeId : fitest._inputLayer) {
+         aReturnedGenome.addNode(aMapForFitest[aInputNodeId]);
+     }
+     
+     // step 3 : for each node found in connections, we add it
+     // we still  need to have them ordered in _allNodes     
     for (const ConnectionGene& aCon : aReturnedGenome._connections) {
         if (!aReturnedGenome.isNodeRegistered(aCon._inputNodeId)) {
             aReturnedGenome.addNode(aMapForFitest[aCon._inputNodeId]);
@@ -307,6 +157,8 @@ List of inactive connections :
             aReturnedGenome.addNode(aMapForFitest[aCon._outputNodeId]);
         }
      }
+     aReturnedGenome.sortAllNodes();
+     
      
      // apply 25% chances to reactivate disabled genes
      for (ConnectionGene& aCon : aReturnedGenome._connections) {
@@ -315,24 +167,98 @@ List of inactive connections :
          }
      }
      
+//    cerr << "-------------" << endl;
+//    fitest.display();
+//    weakest.display();
+//    aReturnedGenome.display();
+//    cerr << "-------------" << endl;
      return aReturnedGenome;
 };
-
-// return a map  first=id of upper node,  second=pointer to connection
-map<int, ConnectionGene*> Genome::getUpperNode(int aNodeId) {
-    map<int, ConnectionGene*> mapOfNodesIdAndConnection;
-    for (ConnectionGene& aConnectionGene: _connections) {
-        if (aConnectionGene._outputNodeId == aNodeId) {
-            mapOfNodesIdAndConnection.insert(
-                mapOfNodesIdAndConnection.begin(),
-                std::pair<int, ConnectionGene*>(aConnectionGene._inputNodeId, &aConnectionGene)
-                );
+// createConnection
+void Genome::createConnection() {
+    std::vector<int> inputCandidateIds = _hiddenLayer;
+    inputCandidateIds.insert(inputCandidateIds.end(), _inputLayer.begin(), _inputLayer.end());
+    int i = inputCandidateIds.at(rand()%inputCandidateIds.size());
+    
+    // output candidates are 
+    // 1- not upstream, 
+    // 2- not already linked
+    // 3- not itself
+    std::vector<int> anExclusionList;
+    anExclusionList.push_back(i);
+    // nodes upstream
+    map<int, vector<ConnectionGene> > aMapOfIncommingConnections = getNodeIncomingConnectionMap();
+    bool allNetworkScanned = false;
+    while (!allNetworkScanned) {
+        allNetworkScanned = true;
+        for (int aNodeIdExcluded: anExclusionList) {
+            for (const ConnectionGene& aCon: aMapOfIncommingConnections[aNodeIdExcluded]) {
+                if (std::find(anExclusionList.begin(),
+                                anExclusionList.end(),
+                                aCon._inputNodeId) == anExclusionList.end() ) {
+                    // if the connection is linked to an updstream node
+                    anExclusionList.push_back(aCon._inputNodeId);
+                    allNetworkScanned = false;
+                }
+            }
+                
+        }
+    } 
+    // nodes already linked
+    for (const ConnectionGene& aCon: _connections) {
+        if (aCon._inputNodeId == i) {
+            anExclusionList.push_back(aCon._outputNodeId);
         }
     }
-    return mapOfNodesIdAndConnection;
-};
+    // build list based on hidden and output layers, fitlering out the nodes on the exclusion list
+    std::vector<int> outputCandidateIds;
+    for (int aNodeId : _hiddenLayer) {
+        if (std::find(anExclusionList.begin(),
+                    anExclusionList.end(),
+                    aNodeId) == anExclusionList.end()) {
+            outputCandidateIds.push_back(aNodeId);
+        }
+    }
+    for (int aNodeId : _outputLayer) {
+        if (std::find(anExclusionList.begin(),
+                    anExclusionList.end(),
+                    aNodeId) == anExclusionList.end()) {
+            outputCandidateIds.push_back(aNodeId);
+        }
+    }
+    
+    if (!outputCandidateIds.empty()) {
+        int o = outputCandidateIds.at(rand()%outputCandidateIds.size());
+//        cerr << "we create a new connection from "<< i << " to " << o << endl;
+        ConnectionGene aNewConnection(i, o);
+        _connections.push_back(aNewConnection);
+    }
+    else {
+//        cerr << "we cannot create a new connection" << endl;
+    }
+}
 
-bool Genome::hasConnectionWith(int aNodeId) const {
+// MISC //////////////////////////////////////
+// sorting
+void Genome::sortAllNodes() {
+    bool sorted = false;
+    while (!sorted) {
+        sorted = true;
+        for (const ConnectionGene& aCon : _connections) {
+            auto i = std::find(_allNodes.begin(), _allNodes.end(), aCon._inputNodeId);
+            auto o = std::find(_allNodes.begin(), _allNodes.end(), aCon._outputNodeId);
+            // we need to verify that o is after i in _allNodes
+            if (std::distance(i,o)<0) {
+                // if not switch positions
+                std::iter_swap(i, o);
+                sorted = false;
+            }
+        }
+    }
+}
+
+// testing
+bool Genome::hasConnectionWithNodeId(int aNodeId) const {
     auto it = find_if(
             _connections.begin(), 
             _connections.end(), 
@@ -357,11 +283,68 @@ void Genome::randomizeWeight() {
     }
 };
 
-void Genome::sortConnectionByInnovationNumber() {
-    std::sort(_connections.begin(),
-        _connections.end());
+
+
+// NETWORK RUN ///////////////////////////////
+map<int, vector<ConnectionGene> > Genome::getNodeIncomingConnectionMap() const {
+    // returns a map from node id to all incoming connections (for which the node id is registered as the output)
+    std::map<int, vector<ConnectionGene> > aMap;
+    for (int nodeId : _allNodes) {
+        vector<ConnectionGene> incomingConnections;
+        for (ConnectionGene aConnection: _connections) {
+            if (aConnection._outputNodeId == nodeId) {
+                incomingConnections.push_back(aConnection);
+            }
+        }
+        aMap.insert(std::make_pair(nodeId, incomingConnections));
+    }
+        
+    return aMap;
+};
+// runs network!
+vector<float> Genome::applyInput(const vector<float>& input) {
+    
+    if (input.size() != _inputLayer.size()-1) {  // last one the bias
+        cerr << "invalid input : not enough input nodes or too much: entries number = "
+                << input.size() << " / input nodes number = " << _inputLayer.size() << endl;
+    }
+    else {
+        // clean network
+        for (int nodeId : _allNodes) {
+            _nodes[nodeId].reset();
+        }
+        // fill inputs layer with values
+        for (unsigned int i=0; i<_inputLayer.size()-1; i++) { // last one the bias
+            _nodes[_inputLayer.at(i)]._value = input.at(i);
+        }
+    }
+
+    map<int, vector<ConnectionGene> > aNodeInputMap = getNodeIncomingConnectionMap();
+    for (int nodeId : _allNodes) {
+        // they are ordered so we can compute one node after an other
+        float aNodeInput = 0.0;
+        // we multiply each input by the weight of the connection
+        for (const ConnectionGene& aConnection : aNodeInputMap[nodeId]) {
+            if (aConnection._enabled) {
+                aNodeInput += aConnection._weight * _nodes[aConnection._inputNodeId]._value;
+            }
+        }
+        
+        if (!_nodes[nodeId].isInput()) {
+            _nodes[nodeId]._value = aNodeInput / (1.0 + abs(aNodeInput));
+        }
+    }
+    
+    // return output
+    vector<float> aOutput;
+    for (int const& aOutputNodeId: _outputLayer) {
+        aOutput.push_back(_nodes[aOutputNodeId]._value);
+    }
+    return aOutput;
 };
 
+
+// UTILS /////////////////////////////////////
 void Genome::display() const {
 //    sortConnectionByInnovationNumber();
     cerr << endl << " Genome " << _id << " ---------------------------- " << endl 
@@ -393,4 +376,44 @@ void Genome::display() const {
         }
     }
     cerr << endl;
+};
+
+void Genome::printCPP() const {
+    cerr<< "----------------------------------------------------------"<<endl;
+    map<int, vector<ConnectionGene> > aNodeInputMap = getNodeIncomingConnectionMap();
+    
+    map<int, NodeGene> nodesCopy = _nodes; 
+    for (int nodeId : _allNodes) {
+        // they are ordered so we can compute one node after an other
+        if (nodesCopy[nodeId].isInput()) {
+            cerr << "float n" << nodeId << " = input ;" << endl;
+        }
+        if (nodesCopy[nodeId].isHidden()) {
+            cerr << "float n" << nodeId << " = 0.0 ;" << endl;        
+        }
+        if (nodesCopy[nodeId].isOutput()) {
+            cerr << "float n" << nodeId << " = 0.0 ; // <= your output" << endl;   
+        }
+    }
+     
+    for (int nodeId : _allNodes) {
+        if (nodesCopy[nodeId].isOutput() || nodesCopy[nodeId].isHidden()) {
+            // we multiply each input by the weight of the connection
+            for (const ConnectionGene& aConnection : aNodeInputMap[nodeId]) {
+                if (aConnection._enabled) {
+                    cerr << "n" << nodeId << " += float(" 
+                            << aConnection._weight 
+                            << ") * n" << aConnection._inputNodeId
+                            << ";" << endl;
+                }
+            }
+            
+//            if (nodesCopy[nodeId].isHidden()) {
+                cerr << "n" << nodeId 
+                        << " = n" << nodeId 
+                        << " / (1.0 + abs(n" << nodeId  <<"));" << endl;
+//            }
+        }
+    }
+    cerr<< "----------------------------------------------------------"<<endl;
 };

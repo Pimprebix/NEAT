@@ -2,6 +2,7 @@
 #define NEAT_H
 #include "Genome.h"
 #include "Species.h"
+#include "InnovationBank.h"
 #include <vector>
 
 class NEAT
@@ -10,7 +11,8 @@ public:
     NEAT(int nbInput, int nbOutput, int popSize=100);
     ~NEAT();
     void setInitialPopulationSize(int iSize);
-    void setFitnessFunction(float (*foo) (const Genome&, const vector<int>&) ) {
+    void setNbOfGenerations(int iNb);
+    void setFitnessFunction(float (*foo) (const Genome&) ) {
         _fitnessFunction = foo;
         };
     void run();
@@ -25,14 +27,18 @@ private:
     Species& getSpeciesById(int id);
     
     std::vector<Species> _species;
-    float (*_fitnessFunction) (const Genome&, const vector<int>&);
+    float (*_fitnessFunction) (const Genome&);
     int _initialPoolSize;
     int _nbInput;
     int _nbOutput;
     float _killRate;
     int _adoptionPercentage;
+    int _nbOfGenerations;
     std::vector< std::tuple<int, int, float, float> > _globalPopulation;
     
+};
+inline void NEAT::setNbOfGenerations(int iNb) {
+    _nbOfGenerations = iNb;
 };
 
 inline void NEAT::setInitialPopulationSize(int iSize) {
@@ -41,12 +47,9 @@ inline void NEAT::setInitialPopulationSize(int iSize) {
 };
 
 inline void NEAT::evalFitness() {
-//    cerr << " Eval fitness ..." ;
     for (Species& aSpecies : _species) {
-//        cerr << " (in a species) " ;
         aSpecies.evalFitness(_fitnessFunction);
     }
-//    cerr << "... end." << endl;
 };
 
 inline void NEAT::killWeakests() {
@@ -119,28 +122,52 @@ inline void NEAT::reproduce()  {
 inline void NEAT::mutate()  {
     for (Species& s: _species) {
         for (Genome& g: s._members) {
-            if (rand()%10==0) {
-                cerr << " node mutate " << endl;
+            if (rand()%30==0) {
                 g.nodeMutate();
+            }
+            if (rand()%3==0) {
+//                Preliminary experiments indicate that high weight mutation rates (i.e. 50% or more) 
+//                are useful for control tasks, but lower rates (i.e. under 1%) are more appropriate for 
+//                high input games like Othello. It may be that the number of inputs is the critical factor, 
+//                and that low-input tasks respond better to high mutation weights. 
+//                Although I do not have concrete statistics from which to draw strong conclusions, 
+//                a good rule of thumb is to change the weight mutation rate 
+//                if the systems seems to be performing below expectations. 
+                g.pointMutate();
+            }
+            if (rand()%10==0) {
+                g.enableDisableMutate();
+            }
+            if (rand()%10==0) {
+//                g.createConnection();
             }
         }
     }
 };
 
 inline void NEAT::run() {
-  for (int generation = 0 ; generation < 100; generation++ ) {  //termination ?
+  for (int generation = 0 ; generation < _nbOfGenerations; generation++ ) {  //termination ?
+    // clear innovationBank
+    InnovationBank::instance()->resetBank();
+    
     cerr << endl << " ********************** " << endl; 
     cerr << " Generation : " << generation << endl; 
     cerr << " Number of Species : " << _species.size() << endl; 
+    for (const Species& s : _species) {
+        cerr << "   - Species " << s._id << " : " << s._members.size() << endl; 
+    }
     
     cerr << " 1 - Eval fitness" << endl;
-      evalFitness();  // done
+    evalFitness();  // done
     cerr << " 2 - Kill weakests" << endl;
-      killWeakests(); // done
+    killWeakests(); // done
+    for (const Species& s : _species) {
+        cerr << "   - Species " << s._id << " : " << s._members.size() << endl; 
+    }
     cerr << " 3 - Reproduce" << endl;
-      reproduce();
+    reproduce();
     cerr << " 4 - Mutate " << endl;
-      mutate();
+    mutate();
   }  
 };
 
@@ -150,8 +177,9 @@ inline Genome NEAT::getBest() {
     theBest._fitness = -1000;
     for (const Species& aSpecies: _species) {
         for (const Genome& aGenome: aSpecies._members) {
+//            cerr << "current fitness : "<< aGenome._fitness << endl;
             if (aGenome._fitness > theBest._fitness) {
-                cerr << "found better : "<< aGenome._fitness;
+//                cerr << "found better : "<< aGenome._fitness;
                 theBest = aGenome;
             }
         }

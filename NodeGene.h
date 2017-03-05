@@ -11,9 +11,10 @@ class NodeGene {
 public:
     NodeGene(string iType = "hidden", int aId = -1); 
     void reset();
-    bool isHidden();
-    bool isInput();
-    bool isOuput();
+    bool isHidden() const;
+    bool isInput() const;
+    bool isOutput() const;
+    bool isBias() const;
     void setUsed();
     void setUnused();
     bool isUsed();
@@ -24,17 +25,25 @@ protected:
     string _type;
 };
 
-inline bool NodeGene::isHidden() {
+inline bool NodeGene::isHidden() const {
     return _type=="hidden"; 
 };
-inline bool NodeGene::isInput() {
+inline bool NodeGene::isInput() const {
     return _type=="input"; 
 };
-inline bool NodeGene::isOuput() {
+inline bool NodeGene::isOutput() const {
     return _type=="output"; 
 };
+inline bool NodeGene::isBias() const {
+    return _type=="bias"; 
+};
 inline void NodeGene::reset() {
-    _value = 0.0;
+    if (!isBias()) {
+        _value = 0.0;
+    }
+    else {
+        _value = 1.0;
+    }
     setUnused();  
 };
 inline void NodeGene::setUsed() {
