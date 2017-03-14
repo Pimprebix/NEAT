@@ -7,8 +7,8 @@ float Settings::WEIGHT_DIST_FACTOR  = 1.0 ;
 float Settings::THRESHOLD = 4.0;
 
 // genetics - reproduction
-float Settings::KILLING_RATE = 0.2;
-float Settings::ADOPTION_RATE = 0.3;
+float Settings::KILLING_RATE = 0.1;
+float Settings::ADOPTION_RATE = 0.01;
 
 // genetics - mutations
 //   Preliminary experiments indicate that high weight mutation rates (i.e. 50% or more) 
@@ -18,12 +18,13 @@ float Settings::ADOPTION_RATE = 0.3;
 //   Although I do not have concrete statistics from which to draw strong conclusions, 
 //   a good rule of thumb is to change the weight mutation rate 
 //   if the systems seems to be performing below expectations. 
-float Settings::MUTATION_RATE_NODE = 0.1;
-float Settings::MUTATION_RATE_WEIGHT = 0.1;
-float Settings::MUTATION_RATE_DISABLE_LINK = 0.1;
-float Settings::MUTATION_RATE_CREATE_LINK = 0.1;
+float Settings::MUTATION_RATE_NODE = 0.02;
+float Settings::MUTATION_RATE_WEIGHT = 0.04;
+float Settings::MUTATION_RATE_DISABLE_LINK = 0.02;
+float Settings::MUTATION_RATE_CREATE_LINK = 0.02;
 
 
 // population
-int Settings::POPULATION_SIZE = 50;
-int Settings::MAX_NUMBER_GENERATION = 100;
+int Settings::POPULATION_SIZE = 100;
+int Settings::MAX_NUMBER_GENERATION = 600;
+float Settings::STOP_EVOLUTION_AT_FITNESS = 0.99;

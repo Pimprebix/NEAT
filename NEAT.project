@@ -11,27 +11,23 @@
     <File Name="IDGenerator.cpp"/>
     <File Name="IDGenerator.h"/>
     <File Name="main.cpp"/>
-    <File Name="Gene.h"/>
-    <File Name="Gene.cpp"/>
     <File Name="NodeGene.h"/>
-    <File Name="NodeGene.cpp"/>
     <File Name="ConnectionGene.h"/>
-    <File Name="ConnectionGene.cpp"/>
     <File Name="Genome.h"/>
     <File Name="Genome.cpp"/>
     <File Name="InnovationBank.h"/>
     <File Name="InnovationBank.cpp"/>
     <File Name="NEAT.h"/>
     <File Name="NEAT.cpp"/>
-    <File Name="Game.cpp"/>
     <File Name="Game.h"/>
     <File Name="Makefile"/>
     <File Name="NEAT.mk"/>
     <File Name="NEAT.project"/>
     <File Name="NEAT.txt"/>
     <File Name="NEAT.workspace"/>
-    <File Name="Species.cpp"/>
     <File Name="Species.h"/>
+    <File Name="Settings.cpp"/>
+    <File Name="Settings.h"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

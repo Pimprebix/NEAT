@@ -17,6 +17,7 @@ public:
     void disable();
     void switchEnableDisable();
     void pointMutate();
+    bool isEnabled() const;
     
     int _inputNodeId;
     int _outputNodeId;
@@ -59,5 +60,8 @@ inline ConnectionGene::ConnectionGene(int aStart, int aEnd, int aInnovationNumbe
     else {
         _innovationNumber = aInnovationNumber;
     }
+};
+inline bool ConnectionGene::isEnabled() const {
+    return _enabled;
 };
 #endif // CONNECTIONGENE_H

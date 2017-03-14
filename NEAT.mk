@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=fabien
-Date                   :=02/03/17
+Date                   :=14/03/17
 CodeLitePath           :=/home/fabien/.codelite
 LinkerName             :=/usr/bin/x86_64-linux-gnu-g++
 SharedObjectLinkerName :=/usr/bin/x86_64-linux-gnu-g++ -shared -fPIC
@@ -60,8 +60,7 @@ AS       := /usr/bin/x86_64-linux-gnu-as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/IDGenerator.cpp$(ObjectSuffix) $(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/Gene.cpp$(ObjectSuffix) $(IntermediateDirectory)/NodeGene.cpp$(ObjectSuffix) $(IntermediateDirectory)/ConnectionGene.cpp$(ObjectSuffix) $(IntermediateDirectory)/Genome.cpp$(ObjectSuffix) $(IntermediateDirectory)/InnovationBank.cpp$(ObjectSuffix) $(IntermediateDirectory)/NEAT.cpp$(ObjectSuffix) $(IntermediateDirectory)/Game.cpp$(ObjectSuffix) $(IntermediateDirectory)/Species.cpp$(ObjectSuffix) \
-	
+Objects0=$(IntermediateDirectory)/IDGenerator.cpp$(ObjectSuffix) $(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/Genome.cpp$(ObjectSuffix) $(IntermediateDirectory)/InnovationBank.cpp$(ObjectSuffix) $(IntermediateDirectory)/NEAT.cpp$(ObjectSuffix) $(IntermediateDirectory)/Settings.cpp$(ObjectSuffix) 
 
 
 
@@ -108,30 +107,6 @@ $(IntermediateDirectory)/main.cpp$(DependSuffix): main.cpp
 $(IntermediateDirectory)/main.cpp$(PreprocessSuffix): main.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/main.cpp$(PreprocessSuffix) main.cpp
 
-$(IntermediateDirectory)/Gene.cpp$(ObjectSuffix): Gene.cpp $(IntermediateDirectory)/Gene.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/fabien/NEAT/Gene.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Gene.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/Gene.cpp$(DependSuffix): Gene.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Gene.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Gene.cpp$(DependSuffix) -MM Gene.cpp
-
-$(IntermediateDirectory)/Gene.cpp$(PreprocessSuffix): Gene.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Gene.cpp$(PreprocessSuffix) Gene.cpp
-
-$(IntermediateDirectory)/NodeGene.cpp$(ObjectSuffix): NodeGene.cpp $(IntermediateDirectory)/NodeGene.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/fabien/NEAT/NodeGene.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/NodeGene.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/NodeGene.cpp$(DependSuffix): NodeGene.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/NodeGene.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/NodeGene.cpp$(DependSuffix) -MM NodeGene.cpp
-
-$(IntermediateDirectory)/NodeGene.cpp$(PreprocessSuffix): NodeGene.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/NodeGene.cpp$(PreprocessSuffix) NodeGene.cpp
-
-$(IntermediateDirectory)/ConnectionGene.cpp$(ObjectSuffix): ConnectionGene.cpp $(IntermediateDirectory)/ConnectionGene.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/fabien/NEAT/ConnectionGene.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/ConnectionGene.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/ConnectionGene.cpp$(DependSuffix): ConnectionGene.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/ConnectionGene.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/ConnectionGene.cpp$(DependSuffix) -MM ConnectionGene.cpp
-
-$(IntermediateDirectory)/ConnectionGene.cpp$(PreprocessSuffix): ConnectionGene.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/ConnectionGene.cpp$(PreprocessSuffix) ConnectionGene.cpp
-
 $(IntermediateDirectory)/Genome.cpp$(ObjectSuffix): Genome.cpp $(IntermediateDirectory)/Genome.cpp$(DependSuffix)
 	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/fabien/NEAT/Genome.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Genome.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/Genome.cpp$(DependSuffix): Genome.cpp
@@ -156,21 +131,13 @@ $(IntermediateDirectory)/NEAT.cpp$(DependSuffix): NEAT.cpp
 $(IntermediateDirectory)/NEAT.cpp$(PreprocessSuffix): NEAT.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/NEAT.cpp$(PreprocessSuffix) NEAT.cpp
 
-$(IntermediateDirectory)/Game.cpp$(ObjectSuffix): Game.cpp $(IntermediateDirectory)/Game.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/fabien/NEAT/Game.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Game.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/Game.cpp$(DependSuffix): Game.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Game.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Game.cpp$(DependSuffix) -MM Game.cpp
+$(IntermediateDirectory)/Settings.cpp$(ObjectSuffix): Settings.cpp $(IntermediateDirectory)/Settings.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/fabien/NEAT/Settings.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Settings.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/Settings.cpp$(DependSuffix): Settings.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Settings.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Settings.cpp$(DependSuffix) -MM Settings.cpp
 
-$(IntermediateDirectory)/Game.cpp$(PreprocessSuffix): Game.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Game.cpp$(PreprocessSuffix) Game.cpp
-
-$(IntermediateDirectory)/Species.cpp$(ObjectSuffix): Species.cpp $(IntermediateDirectory)/Species.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/fabien/NEAT/Species.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Species.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/Species.cpp$(DependSuffix): Species.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Species.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Species.cpp$(DependSuffix) -MM Species.cpp
-
-$(IntermediateDirectory)/Species.cpp$(PreprocessSuffix): Species.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Species.cpp$(PreprocessSuffix) Species.cpp
+$(IntermediateDirectory)/Settings.cpp$(PreprocessSuffix): Settings.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Settings.cpp$(PreprocessSuffix) Settings.cpp
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)

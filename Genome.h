@@ -35,7 +35,8 @@ public:
     void addConnection(ConnectionGene iCon);
     void addNode(NodeGene iNode, int insertAfterNode=-1);
     
-    ConnectionGene getConnectionFromInnovationNumber(int nb) const;
+    ConnectionGene& getConnectionFromInnovationNumber(int nb);
+    ConnectionGene getCopyConnectionFromInnovationNumber(int nb) const;
     static float getDistance(const Genome&  iGenome1, const Genome& iGenome2);    
     static void getTopologicalComparision(const Genome&  iGenome1, 
                                             const Genome& iGenome2, 
@@ -89,7 +90,16 @@ inline void Genome::addConnection(ConnectionGene iCon) {
     _connections.push_back(iCon);
 };
 
-inline ConnectionGene Genome::getConnectionFromInnovationNumber(int aConId) const {    
+inline ConnectionGene& Genome::getConnectionFromInnovationNumber(int aConId) {    
+    auto it = find_if(
+            _connections.begin(), 
+            _connections.end(), 
+            [aConId] (const ConnectionGene& aConnnectionGene) { 
+                    return aConnnectionGene._innovationNumber == aConId;});
+    return *it;
+};
+
+inline ConnectionGene Genome::getCopyConnectionFromInnovationNumber(int aConId) const {    
     auto it = find_if(
             _connections.begin(), 
             _connections.end(), 
@@ -158,8 +168,8 @@ inline float Genome::getDistance(const Genome&  iGenome1, const Genome& iGenome2
     float N = float(max(iGenome1._connections.size(), iGenome2._connections.size()));
     float W = 0.0;
     for (int innovNber : commonGenes) {
-        W += iGenome1.getConnectionFromInnovationNumber(innovNber)._weight;
-        W -= iGenome2.getConnectionFromInnovationNumber(innovNber)._weight;
+        W += iGenome1.getCopyConnectionFromInnovationNumber(innovNber)._weight;
+        W -= iGenome2.getCopyConnectionFromInnovationNumber(innovNber)._weight;
     }
     W = abs( W / float(commonGenes.size()) );
     

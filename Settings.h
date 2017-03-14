@@ -11,6 +11,7 @@ public:
     
     static int POPULATION_SIZE;
     static int MAX_NUMBER_GENERATION;
+    static float STOP_EVOLUTION_AT_FITNESS;
     
     static float MUTATION_RATE_NODE;
     static float MUTATION_RATE_WEIGHT;

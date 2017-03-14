@@ -47,18 +47,20 @@ void Genome::pointMutate() {
 };
 // nodeMutate silence a connection and adds a connection between the 2 nodes adding 1 new intermediary node 
 void Genome::nodeMutate() {
-    // get connection enabled
-    int index = rand()%_connections.size();
-    ConnectionGene& aConnection = _connections.at(index);
-    
-    
-    // remove 
-    if (_nodes[aConnection._inputNodeId].isBias()) {
-        return;
+    vector<int> aListOfEligibleNodes;
+    int aBiasId = _biasLayer.at(0);
+    for (const ConnectionGene& aConnection : _connections) {
+        if (aConnection.isEnabled() && (aConnection._inputNodeId != aBiasId) ) { // !_nodes[aConnection._inputNodeId].isBias())
+            aListOfEligibleNodes.push_back(aConnection._innovationNumber);
+        }
     }
-//    while (!_connections.at(index)._enabled) {
-//        index = rand()%_connections.size();
-//    }        
+    if (aListOfEligibleNodes.empty()) {
+        return; // all links are mutated. it should never happen.
+    }
+        
+    ConnectionGene& aConnection = getConnectionFromInnovationNumber(
+            aListOfEligibleNodes.at(rand()%aListOfEligibleNodes.size())
+            );
     
     // disable existing connection
     aConnection.disable();
@@ -89,8 +91,7 @@ void Genome::nodeMutate() {
     aConnection2._weight = aConnection._weight;
     _connections.push_back(aConnection2);
     
-    // each hidden Node can be connected to a bias but the algo will figure it out
-    
+//  each hidden Node can be connected to a bias but the algo will figure it out    
 //    ConnectionGene aConnection3(_inputLayer.back(), aNodeGene._id, std::get<3>(aIdTuple));
 //     aConnection3._weight = 0.0;
 //    _connections.push_back(aConnection3);
@@ -125,7 +126,7 @@ Genome Genome::crossOver(const Genome& fitest, const Genome& weakest, bool equal
          // common connections are inherited randomley from the parents 
          if (weakest.hasConnectionId(aCon._innovationNumber)) {  
              if (rand()%2 == 0) {  // get from weakest
-                 aCon = weakest.getConnectionFromInnovationNumber(aCon._innovationNumber);
+                 aCon = weakest.getCopyConnectionFromInnovationNumber(aCon._innovationNumber);
              }
             aReturnedGenome.addConnection(aCon);
          }
@@ -240,7 +241,7 @@ void Genome::createConnection() {
         }
     }
     
-    if (!outputCandidateIds.empty()) {
+    if (!outputCandidateIds.empty()) { // TODO: register innovation
         int o = outputCandidateIds.at(rand()%outputCandidateIds.size());
 //        cerr << "we create a new connection from "<< i << " to " << o << endl;
         ConnectionGene aNewConnection(i, o);

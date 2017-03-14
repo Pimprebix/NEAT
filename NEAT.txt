@@ -1,1 +1,1 @@
-./Debug/IDGenerator.cpp.o ./Debug/main.cpp.o ./Debug/Gene.cpp.o ./Debug/NodeGene.cpp.o ./Debug/ConnectionGene.cpp.o ./Debug/Genome.cpp.o ./Debug/InnovationBank.cpp.o ./Debug/NEAT.cpp.o ./Debug/Game.cpp.o ./Debug/Species.cpp.o
+./Debug/IDGenerator.cpp.o ./Debug/main.cpp.o ./Debug/Genome.cpp.o ./Debug/InnovationBank.cpp.o ./Debug/NEAT.cpp.o ./Debug/Settings.cpp.o

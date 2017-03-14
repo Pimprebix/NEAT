@@ -122,16 +122,16 @@ inline void NEAT::reproduce()  {
 inline void NEAT::mutate()  {
     for (Species& s: _species) {
         for (Genome& g: s._members) {
-            if ((rand() / (float) (RAND_MAX + 1)) < Settings::MUTATION_RATE_NODE )  {
+            if ((rand() / (float) (RAND_MAX)) < Settings::MUTATION_RATE_NODE )  {
                 g.nodeMutate();
             }
-            if ((rand() / (float) (RAND_MAX + 1)) < Settings::MUTATION_RATE_WEIGHT )  {
+            if ((rand() / (float) (RAND_MAX)) < Settings::MUTATION_RATE_WEIGHT )  {
                 g.pointMutate();
             }
-            if ((rand() / (float) (RAND_MAX + 1)) < Settings::MUTATION_RATE_DISABLE_LINK )  {
+            if ((rand() / (float) (RAND_MAX)) < Settings::MUTATION_RATE_DISABLE_LINK )  {
                 g.enableDisableMutate();
             }
-            if ((rand() / (float) (RAND_MAX + 1)) < Settings::MUTATION_RATE_CREATE_LINK )  {
+            if ((rand() / (float) (RAND_MAX)) < Settings::MUTATION_RATE_CREATE_LINK )  {
                 g.createConnection();
             }
         }
@@ -146,17 +146,14 @@ inline void NEAT::run() {
     cerr << endl << " ********************** " << endl; 
     cerr << " Generation : " << generation << endl; 
     cerr << " Number of Species : " << _species.size() << endl; 
-//    for (const Species& s : _species) {
-//        cerr << "   - Species " << s._id << " : " << s._members.size() << endl; 
-//    }
+    for (const Species& s : _species) {
+        cerr << "   - Species " << s._id << " : " << s._members.size() << endl; 
+    }
     
     cerr << " 1 - Eval fitness" << endl;
     evalFitness();  // done
     cerr << " 2 - Kill weakests" << endl;
-    killWeakests(); // done
-//    for (const Species& s : _species) {
-//        cerr << "   - Species " << s._id << " : " << s._members.size() << endl; 
-//    }
+    killWeakests(); 
     cerr << " 3 - Reproduce" << endl;
     reproduce();
     cerr << " 4 - Mutate " << endl;
@@ -167,7 +164,7 @@ inline void NEAT::run() {
 inline Genome NEAT::getBest() {
     evalFitness();
     Genome theBest;
-    theBest._fitness = -1000;
+    theBest._fitness = 0;
     for (const Species& aSpecies: _species) {
         for (const Genome& aGenome: aSpecies._members) {
 //            cerr << "current fitness : "<< aGenome._fitness << endl;
@@ -178,7 +175,7 @@ inline Genome NEAT::getBest() {
         }
     }
     theBest.display();
-    cerr << theBest._fitness << endl;
+    cerr << "best fitness found = " << theBest._fitness << endl;
     return theBest;
 }
 
