@@ -1,26 +1,21 @@
+#include <ctime>
 #include "NEAT.h"
 
-
-NEAT::NEAT(int nbInput, int nbOutput, int popSize) {
-    _nbInput = nbInput; // bias is considered as an input
+NEAT::NEAT(int nbInput, int nbOutput) {
+    srand(time(0)); // seed rand()
+    _nbInput = nbInput; // bias is considered as an input and is manage at genome level
     _nbOutput= nbOutput;
-    _killRate = 0.20;
-    _nbOfGenerations = 100;
-    _adoptionPercentage = 1;
-    setInitialPopulationSize(popSize);
+    initialize();
 }
-
-NEAT::~NEAT() {
-}
-
-//void NEAT::setFitnessFunction(float (*fitnessFonction) (const Genome&, const vector<int>&) ) {};
 
 void NEAT::initialize() {
     _species.clear();
+    _globalPopulation.clear();
+    
     // create wanted numbers of genomes with minimal topology within one species
     Species aSpecies;
     Genome aModel(_nbInput, _nbOutput);
-    for (int i=0; i<_initialPoolSize; i++) {
+    for (int i=0; i<Settings::POPULATION_SIZE; i++) {
         Genome aGenome = aModel;
         aGenome.getNewId();
         aGenome.randomizeWeight();

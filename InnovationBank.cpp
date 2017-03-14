@@ -11,7 +11,7 @@ InnovationBank* InnovationBank::instance () {
 
 bool InnovationBank::isInnovationNew(int inputId, int outputId) {
     std::pair<int, int> aIdPair = std::make_pair(inputId, outputId);
-    std::map<std::pair<int, int>, std::tuple<int, int, int, int> >::iterator it;
+    std::map<std::pair<int, int>, std::tuple<int, int, int> >::iterator it;
     it = _innovationMap.find(aIdPair);
     if (it != _innovationMap.end() )
     {

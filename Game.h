@@ -25,17 +25,17 @@ public:
         
         for (int i = 0; i < 36; i++) {
             angle = float(i*10 - 180) * 3.14159265359/180.; 
-            aPrediction = aSolutionCopy.applyInput({angle}).at(0);
+            aPrediction = aSolutionCopy.execute({angle}).at(0);
             anExpectedResult = f(angle);
             anAverageDeviation += (aPrediction - anExpectedResult) * (aPrediction - anExpectedResult);
         }
         anAverageDeviation *= 1.0/36.0;
 
         
-        return 1 - (anAverageDeviation);
+        return 2.0 - (anAverageDeviation);
     };
     
     static float f(float x) {
-        return sin(x) * 0.8;
+        return cos(x) * 0.8;
     }
 };

@@ -3,6 +3,7 @@
 #include "IDGenerator.h"
 
 
+
 Genome::Genome(int id) {
     if (id == -1) {
         getNewId();
@@ -23,7 +24,6 @@ Genome::Genome(int numberOfInputNode, int numberOfOuputNode, int id) {
     }
     addNode(NodeGene("bias")); // will be stored in inputLayer
     
-    // buildMinimalStructure();
     for (int const& aId1: _inputLayer) {
         for (int const& aId2: _outputLayer) {
             addConnection(ConnectionGene(aId1, aId2));       
@@ -36,7 +36,6 @@ Genome::Genome(int numberOfInputNode, int numberOfOuputNode, int id) {
     else {
         _id = id;
     }
-    
     _maxInnovationNumber = 0;
 };
 
@@ -51,6 +50,12 @@ void Genome::nodeMutate() {
     // get connection enabled
     int index = rand()%_connections.size();
     ConnectionGene& aConnection = _connections.at(index);
+    
+    
+    // remove 
+    if (_nodes[aConnection._inputNodeId].isBias()) {
+        return;
+    }
 //    while (!_connections.at(index)._enabled) {
 //        index = rand()%_connections.size();
 //    }        
@@ -64,7 +69,7 @@ void Genome::nodeMutate() {
     
     int inputNodeId = aConnection._inputNodeId;
     int outputNodeId = aConnection._outputNodeId;
-    std::tuple<int, int, int, int> aIdTuple 
+    std::tuple<int, int, int> aIdTuple 
         = aInnovationBank->getInnovationNumbersAndNodeId(
             inputNodeId, 
             outputNodeId);
@@ -84,13 +89,17 @@ void Genome::nodeMutate() {
     aConnection2._weight = aConnection._weight;
     _connections.push_back(aConnection2);
     
-    // each hidden Node should be connected to a bias
-    ConnectionGene aConnection3(_inputLayer.back(), aNodeGene._id, std::get<3>(aIdTuple));
-    _connections.push_back(aConnection3);
+    // each hidden Node can be connected to a bias but the algo will figure it out
+    
+//    ConnectionGene aConnection3(_inputLayer.back(), aNodeGene._id, std::get<3>(aIdTuple));
+//     aConnection3._weight = 0.0;
+//    _connections.push_back(aConnection3);
     
     
     // maximum innovation number to register (will be used for Xover)
-    _maxInnovationNumber = max({_maxInnovationNumber, aConnection1._innovationNumber, aConnection2._innovationNumber});
+    _maxInnovationNumber = max({_maxInnovationNumber, 
+                    aConnection1._innovationNumber,
+                    aConnection2._innovationNumber});
     
     // register if necessary the innovation
     if (aInnovationBank->isInnovationNew(inputNodeId, outputNodeId)) {
@@ -100,8 +109,7 @@ void Genome::nodeMutate() {
                             outputNodeId,  // original connection
                             aNodeGene._id, 
                             aConnection1._innovationNumber, 
-                            aConnection2._innovationNumber,
-                            aConnection3._innovationNumber );
+                            aConnection2._innovationNumber);
     }
 };
 // enable or disable connection
@@ -142,8 +150,8 @@ Genome Genome::crossOver(const Genome& fitest, const Genome& weakest, bool equal
      map<int, NodeGene> aMapForWeakest = weakest.getNodeMap();
      aMapForFitest.insert(aMapForWeakest.begin(), aMapForWeakest.end());
      
-     // step 2 : add input and output nodes
-     for (const int aInputNodeId : fitest._inputLayer) {
+     // step 2 : add bias nodes
+     for (const int aInputNodeId : fitest._biasLayer) {
          aReturnedGenome.addNode(aMapForFitest[aInputNodeId]);
      }
      
@@ -177,7 +185,12 @@ Genome Genome::crossOver(const Genome& fitest, const Genome& weakest, bool equal
 // createConnection
 void Genome::createConnection() {
     std::vector<int> inputCandidateIds = _hiddenLayer;
-    inputCandidateIds.insert(inputCandidateIds.end(), _inputLayer.begin(), _inputLayer.end());
+    for (int aNodeId : _inputLayer) {
+        inputCandidateIds.push_back(aNodeId);
+    }
+    for (int aNodeId : _biasLayer) {
+        inputCandidateIds.push_back(aNodeId);
+    }
     int i = inputCandidateIds.at(rand()%inputCandidateIds.size());
     
     // output candidates are 
@@ -302,11 +315,12 @@ map<int, vector<ConnectionGene> > Genome::getNodeIncomingConnectionMap() const {
     return aMap;
 };
 // runs network!
-vector<float> Genome::applyInput(const vector<float>& input) {
+vector<float> Genome::execute(const vector<float>& input) {
     
-    if (input.size() != _inputLayer.size()-1) {  // last one the bias
+    if (input.size() != _inputLayer.size()) { 
         cerr << "invalid input : not enough input nodes or too much: entries number = "
                 << input.size() << " / input nodes number = " << _inputLayer.size() << endl;
+        throw "Error : invalid input ";
     }
     else {
         // clean network
@@ -314,7 +328,7 @@ vector<float> Genome::applyInput(const vector<float>& input) {
             _nodes[nodeId].reset();
         }
         // fill inputs layer with values
-        for (unsigned int i=0; i<_inputLayer.size()-1; i++) { // last one the bias
+        for (unsigned int i=0; i<_inputLayer.size(); i++) { 
             _nodes[_inputLayer.at(i)]._value = input.at(i);
         }
     }
@@ -322,15 +336,14 @@ vector<float> Genome::applyInput(const vector<float>& input) {
     map<int, vector<ConnectionGene> > aNodeInputMap = getNodeIncomingConnectionMap();
     for (int nodeId : _allNodes) {
         // they are ordered so we can compute one node after an other
-        float aNodeInput = 0.0;
-        // we multiply each input by the weight of the connection
-        for (const ConnectionGene& aConnection : aNodeInputMap[nodeId]) {
-            if (aConnection._enabled) {
-                aNodeInput += aConnection._weight * _nodes[aConnection._inputNodeId]._value;
+        if (!_nodes[nodeId].isInput() && !_nodes[nodeId].isBias()) {
+            float aNodeInput = 0.0;
+            // we multiply each input by the weight of the connection
+            for (const ConnectionGene& aConnection : aNodeInputMap[nodeId]) {
+                if (aConnection._enabled) {
+                    aNodeInput += aConnection._weight * _nodes[aConnection._inputNodeId]._value;
+                }
             }
-        }
-        
-        if (!_nodes[nodeId].isInput()) {
             _nodes[nodeId]._value = aNodeInput / (1.0 + abs(aNodeInput));
         }
     }

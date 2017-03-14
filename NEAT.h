@@ -8,10 +8,7 @@
 class NEAT
 {
 public:
-    NEAT(int nbInput, int nbOutput, int popSize=100);
-    ~NEAT();
-    void setInitialPopulationSize(int iSize);
-    void setNbOfGenerations(int iNb);
+    NEAT(int nbInput, int nbOutput);
     void setFitnessFunction(float (*foo) (const Genome&) ) {
         _fitnessFunction = foo;
         };
@@ -28,27 +25,30 @@ private:
     
     std::vector<Species> _species;
     float (*_fitnessFunction) (const Genome&);
-    int _initialPoolSize;
     int _nbInput;
     int _nbOutput;
-    float _killRate;
-    int _adoptionPercentage;
-    int _nbOfGenerations;
     std::vector< std::tuple<int, int, float, float> > _globalPopulation;
-    
-};
-inline void NEAT::setNbOfGenerations(int iNb) {
-    _nbOfGenerations = iNb;
-};
-
-inline void NEAT::setInitialPopulationSize(int iSize) {
-    _initialPoolSize = iSize;
-    initialize();
 };
 
 inline void NEAT::evalFitness() {
     for (Species& aSpecies : _species) {
-        aSpecies.evalFitness(_fitnessFunction);
+        for (Genome& aGenome : aSpecies._members) { 
+            float aFitness = _fitnessFunction(aGenome);
+            aGenome.setFitness(aFitness);
+            
+            if (aFitness < 0.) {
+                throw "Error : negative fitness! fitness should be always positive!" ;
+            }
+            
+            // adjusted fitness
+            float counter = 0.0;
+            for (const Genome& otherGenome : aSpecies._members) { //  it will be at least equal to 1 since the distance from itself is 0
+                if (Genome::getDistance(aGenome, otherGenome) < Settings::THRESHOLD) {  // could use some cache here
+                    counter +=1.0;
+                }
+            }
+            aGenome.setAdjustedFitness(aFitness / counter);
+        }
     }
 };
 
@@ -67,7 +67,7 @@ inline void NEAT::killWeakests() {
     
     
 // 2 - kill the least performing of all based on the killRate (so far)
-    int numberOfVictims = abs(_globalPopulation.size() * _killRate);
+    int numberOfVictims = abs(_globalPopulation.size() * Settings::KILLING_RATE);
     for (int i =0 ; i <= numberOfVictims; i++) {
 //        cerr << "Remove genome " << get<0>(_globalPopulation.at(i)) << " from species " << get<1>(_globalPopulation.at(i)) << " / adjusted fitness = " << get<3>(_globalPopulation.at(i)) << endl;
         getSpeciesById(get<1>(_globalPopulation.at(i))).removeGenomeById(get<0>(_globalPopulation.at(i)));
@@ -91,7 +91,7 @@ inline void NEAT::killWeakests() {
 
 inline void NEAT::reproduce()  {
 //    _globalPopulation already exists and is sorted (best first)    
-    int numberOfChildren = _initialPoolSize - _globalPopulation.size();
+    int numberOfChildren = Settings::POPULATION_SIZE - _globalPopulation.size();
     for (int i = 0 ; i < numberOfChildren ; i++) {
         Species& aSpecies = getSpeciesById(get<1>(_globalPopulation.at(i)));
         
@@ -109,7 +109,7 @@ inline void NEAT::reproduce()  {
         }
 
         // adoption mechanism
-        if (rand()%100 < _adoptionPercentage) {
+        if (float(rand()%100)/100. < Settings::ADOPTION_RATE) {
             assignToSpecies(aNewGenome);
         }
         else {
@@ -122,48 +122,41 @@ inline void NEAT::reproduce()  {
 inline void NEAT::mutate()  {
     for (Species& s: _species) {
         for (Genome& g: s._members) {
-            if (rand()%30==0) {
+            if ((rand() / (float) (RAND_MAX + 1)) < Settings::MUTATION_RATE_NODE )  {
                 g.nodeMutate();
             }
-            if (rand()%3==0) {
-//                Preliminary experiments indicate that high weight mutation rates (i.e. 50% or more) 
-//                are useful for control tasks, but lower rates (i.e. under 1%) are more appropriate for 
-//                high input games like Othello. It may be that the number of inputs is the critical factor, 
-//                and that low-input tasks respond better to high mutation weights. 
-//                Although I do not have concrete statistics from which to draw strong conclusions, 
-//                a good rule of thumb is to change the weight mutation rate 
-//                if the systems seems to be performing below expectations. 
+            if ((rand() / (float) (RAND_MAX + 1)) < Settings::MUTATION_RATE_WEIGHT )  {
                 g.pointMutate();
             }
-            if (rand()%10==0) {
+            if ((rand() / (float) (RAND_MAX + 1)) < Settings::MUTATION_RATE_DISABLE_LINK )  {
                 g.enableDisableMutate();
             }
-            if (rand()%10==0) {
-//                g.createConnection();
+            if ((rand() / (float) (RAND_MAX + 1)) < Settings::MUTATION_RATE_CREATE_LINK )  {
+                g.createConnection();
             }
         }
     }
 };
 
 inline void NEAT::run() {
-  for (int generation = 0 ; generation < _nbOfGenerations; generation++ ) {  //termination ?
+  for (int generation = 0 ; generation < Settings::MAX_NUMBER_GENERATION; generation++ ) {  //termination ?
     // clear innovationBank
     InnovationBank::instance()->resetBank();
     
     cerr << endl << " ********************** " << endl; 
     cerr << " Generation : " << generation << endl; 
     cerr << " Number of Species : " << _species.size() << endl; 
-    for (const Species& s : _species) {
-        cerr << "   - Species " << s._id << " : " << s._members.size() << endl; 
-    }
+//    for (const Species& s : _species) {
+//        cerr << "   - Species " << s._id << " : " << s._members.size() << endl; 
+//    }
     
     cerr << " 1 - Eval fitness" << endl;
     evalFitness();  // done
     cerr << " 2 - Kill weakests" << endl;
     killWeakests(); // done
-    for (const Species& s : _species) {
-        cerr << "   - Species " << s._id << " : " << s._members.size() << endl; 
-    }
+//    for (const Species& s : _species) {
+//        cerr << "   - Species " << s._id << " : " << s._members.size() << endl; 
+//    }
     cerr << " 3 - Reproduce" << endl;
     reproduce();
     cerr << " 4 - Mutate " << endl;

@@ -1,6 +1,7 @@
 #ifndef SPECIES_H
 #define SPECIES_H
 #include "Genome.h"
+#include "IDGenerator.h"
 //#include "
 #include <vector>
 
@@ -11,8 +12,6 @@ public:
     
     Species(int aId = -1);
     bool testGenomeForSpecies(const Genome& iGenome) const;
-    void evalFitness(float (*foo) (const Genome&) );
-//    void orderByAdjustedFitness();
     void removeGenomeById(int id);
     void addGenome(Genome iGenome);
     Genome& getGenomeById(int aId) ;
@@ -26,25 +25,7 @@ inline void Species::addGenome(Genome iGenome) {
 
 inline bool Species::testGenomeForSpecies(const Genome& iGenome) const {
     const Genome& aRefenceGenome = _members.at(rand()%_members.size()); 
-    return Genome::getDistance(iGenome, aRefenceGenome) < THRESHOLD;
-};
-
-inline void Species::evalFitness(float (*foo) (const Genome&)  ) {
-    for (Genome& aGenome : _members) { 
-//        cerr << "eval Fitness of genome " << aGenome._id << endl;
-        float aFitness = foo(aGenome);
-        aGenome.setFitness(aFitness);
-//        cerr << aFitness << endl;
-        
-        // adjusted fitness
-        float counter = 0.0;
-        for (const Genome& otherGenome : _members) {
-            if (Genome::getDistance(aGenome, otherGenome)<THRESHOLD) {  // could use some cache here
-                counter +=1.0;
-            }
-        }
-        aGenome.setAdjustedFitness(aFitness / counter);
-    }
+    return Genome::getDistance(iGenome, aRefenceGenome) < Settings::THRESHOLD;
 };
 
 inline Genome& Species::getGenomeById(int aId) {
@@ -71,4 +52,15 @@ inline void Species::removeGenomeById(int aId) {
         _members.end());
     
 };
+
+inline Species::Species(int aId) {
+    if (aId == -1) {
+        _id = IDGenerator::instance()->getId();
+    }
+    else {
+        _id = aId;
+    }
+};
+
+
 #endif // SPECIES_H

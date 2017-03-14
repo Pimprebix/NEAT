@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include "InnovationBank.h"
 
 using namespace std;
 class ConnectionGene {
@@ -49,5 +50,14 @@ inline void ConnectionGene::switchEnableDisable() {
 inline bool ConnectionGene::operator< (const ConnectionGene& other) const {
     return _innovationNumber<other._innovationNumber;
 };
-
+inline ConnectionGene::ConnectionGene(int aStart, int aEnd, int aInnovationNumber)  : _inputNodeId(aStart), _outputNodeId(aEnd) {
+    _enabled = true;
+    _weight = float(rand()%5) - 2.0;
+    if (aInnovationNumber==-1) {
+        _innovationNumber = InnovationBank::instance()->getInnovationNumber();
+    }
+    else {
+        _innovationNumber = aInnovationNumber;
+    }
+};
 #endif // CONNECTIONGENE_H

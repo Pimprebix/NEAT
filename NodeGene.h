@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include "IDGenerator.h"
 using namespace std;
 class NodeGene {
 public:
@@ -15,13 +16,9 @@ public:
     bool isInput() const;
     bool isOutput() const;
     bool isBias() const;
-    void setUsed();
-    void setUnused();
-    bool isUsed();
     int _id; // id
     float _value; 
 protected:
-    bool _isUsed;
     string _type;
 };
 
@@ -44,16 +41,15 @@ inline void NodeGene::reset() {
     else {
         _value = 1.0;
     }
-    setUnused();  
 };
-inline void NodeGene::setUsed() {
-    _isUsed = true;
-};
-inline void NodeGene::setUnused() {
-    _isUsed = false;
-};
-inline bool NodeGene::isUsed() {
-    return _isUsed; 
+inline NodeGene::NodeGene(std::string iType, int aId) {
+    if (aId == -1) {
+        _id = IDGenerator::instance()->getId();
+    }
+    else {
+        _id = aId;
+    }
+    _type = iType;
 };
 
 #endif // NODEGENE_H

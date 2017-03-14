@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include "Settings.h"
 
 class Genome {  // a genome is a network
 public:
@@ -45,7 +46,7 @@ public:
                                             vector<int>& excessInGenome2);
     
     // runs network!
-    vector<float> applyInput(const vector<float>& input);
+    vector<float> execute(const vector<float>& input);
 
     
     // MUTATIONS
@@ -69,6 +70,7 @@ private:
     int _maxInnovationNumber;
     
     // collections of Ids:
+    vector<int> _biasLayer; 
     vector<int> _inputLayer; 
     vector<int> _outputLayer; 
     vector<int> _hiddenLayer; 
@@ -114,11 +116,14 @@ inline void Genome::addNode(NodeGene iNode, int insertAfterNode) {
     
     _allNodes.insert(it, iNode._id); // insert at the end by default
     
-    if (iNode.isInput() || iNode.isBias())  {
+    if (iNode.isInput())  {
         _inputLayer.push_back(iNode._id);
     } 
     else if (iNode.isOutput())  {
         _outputLayer.push_back(iNode._id);
+    } 
+    else if (iNode.isBias())  {
+        _biasLayer.push_back(iNode._id);
     } 
     else {
         _hiddenLayer.push_back(iNode._id);
@@ -150,9 +155,6 @@ inline float Genome::getDistance(const Genome&  iGenome1, const Genome& iGenome2
                             excessInGenome1,
                             excessInGenome2);
     
-    float c1 = 2.0;
-    float c2 = 2.0;
-    float c3 = 1.0;
     float N = float(max(iGenome1._connections.size(), iGenome2._connections.size()));
     float W = 0.0;
     for (int innovNber : commonGenes) {
@@ -161,9 +163,9 @@ inline float Genome::getDistance(const Genome&  iGenome1, const Genome& iGenome2
     }
     W = abs( W / float(commonGenes.size()) );
     
-    aReturnedDistance = (c1 * float(excessInGenome1.size() + excessInGenome2.size())) / N
-                      + (c2 * float(disjointInGenome1.size() + disjointInGenome2.size())) / N  
-                      +  c3 * W;
+    aReturnedDistance = (Settings::EXCESS_DIST_FACTOR * float(excessInGenome1.size() + excessInGenome2.size())) / N
+                      + (Settings::DISJOINT_DIST_FACTOR * float(disjointInGenome1.size() + disjointInGenome2.size())) / N  
+                      +  Settings::WEIGHT_DIST_FACTOR * W;
     
     if (false) {
         cerr << "average weight difference = " << W << endl;
