@@ -6,12 +6,13 @@
 #include <string>
 #include <map>
 #include <algorithm>
-#include "InnovationBank.h"
+#include "Settings.h"
+#include "IDGenerator.h"
 
 using namespace std;
 class ConnectionGene {
 public:
-    ConnectionGene(int aStart, int aEnd, int aInnovationNumber=-1);
+    ConnectionGene(int aStart, int aEnd, int aId=-1);
     bool operator< (const ConnectionGene& other) const;
     void setRandomWeight();
     void disable();
@@ -23,20 +24,15 @@ public:
     int _outputNodeId;
     bool _enabled;
     float _weight;
-    int _innovationNumber;
+    int _id;
 };
 
 inline void ConnectionGene::pointMutate() {
-    int r = rand()%4;
-    if (r == 0) {
-        _weight += 0.1;
-    }
-    else if (r == 1) {
-        _weight -= 0.1;
+    if (rand()%2 == 0) {
+        _weight += Settings::MUTATION_STEP_WEIGHT;
     }
     else {
-//        _weight += (float(rand()%400)/100. - 2.0);
-        setRandomWeight();
+        _weight -= Settings::MUTATION_STEP_WEIGHT;
     }
 };
 inline void ConnectionGene::setRandomWeight() {
@@ -49,16 +45,16 @@ inline void ConnectionGene::switchEnableDisable() {
     _enabled = !_enabled;  
 };
 inline bool ConnectionGene::operator< (const ConnectionGene& other) const {
-    return _innovationNumber<other._innovationNumber;
+    return _id<other._id;
 };
-inline ConnectionGene::ConnectionGene(int aStart, int aEnd, int aInnovationNumber)  : _inputNodeId(aStart), _outputNodeId(aEnd) {
+inline ConnectionGene::ConnectionGene(int aStart, int aEnd, int aId)  : _inputNodeId(aStart), _outputNodeId(aEnd) {
     _enabled = true;
     _weight = float(rand()%5) - 2.0;
-    if (aInnovationNumber==-1) {
-        _innovationNumber = InnovationBank::instance()->getInnovationNumber();
+    if (aId==-1) {
+        _id = IDGenerator::instance()->getId();
     }
     else {
-        _innovationNumber = aInnovationNumber;
+        _id = aId;
     }
 };
 inline bool ConnectionGene::isEnabled() const {

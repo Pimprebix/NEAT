@@ -14,8 +14,4 @@ class IDGenerator {
       int _id;
 };
 
-
-
-
-
 #endif // IDGENERATOR_H

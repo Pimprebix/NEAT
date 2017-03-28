@@ -1,10 +1,86 @@
 #include <vector>
 #include <cmath>
 
+//class Point {
+//  int _x, _y;
+//  Point(int x, int y) {
+//    _x = x;
+//    _y = y;
+//  };
+//};
+//
+//class Pod {
+//    //physics
+//    Point _position;
+//    std::pair<int, int> _speed;
+//    float _angle; //
+//    // race data
+//    int _nextCheckPointId;
+//    float _percentageOfTheRaceCompleted;
+//    int _team;
+//    int _id;
+//    
+//};
+//
+//class Circuit {
+//public: 
+//    Circuit() {
+//      for (int i = 0; i<numberOfWaypoints; i++) {
+//          _waypoints[i] = Point(rand()%maxW , rand()%maxH);          
+//      }  
+//    };
+//    Point getCheckpoint(int i) {
+//        return _waypoints[i];
+//    }
+//private:
+//    std::map<int, Point> _waypoints; 
+//    int maxW = 16000;
+//    int maxH = 9000;
+//    int numberOfWaypoints = 5;
+//};
+//
+//class Race {
+//    Circuit _circuit;
+//    std::vector<Pod> _pods;
+//    float _score;
+//    
+//    void addPod(Pod aPod) {
+//        aPod._id = _pods.size();
+//        _pods.push_back(aPod);
+//    };
+//    void startRace() {
+//        // init conditions
+//        
+//        // run race
+//        bool raceContinues = true;
+//        while (raceContinues) {
+//            for (Pod& p: _pods) {
+//                p.get
+//            }
+//        }
+//        
+//        // compute how the current IA performed
+//        computeScore(); 
+//    };
+//    void applyMove(Pod& iPod, float angle, int thrust) {
+//        iPod._angle += angle;
+////        std::pair<int, int> aNewPosition = std::make_pair()
+//    };
+//    void computeScore() {
+//      _score = 0.;  
+//    };
+//};
+
+
+//std::vector<int, int> get
+
 class Game {
 public:
     template <class T>
     static float evalSolution(const T& aSolution ) {
+        
+        
+        
         // to get the result of the current predictive/decision model, call applyInput
         T aSolutionCopy = aSolution;
         
@@ -30,16 +106,15 @@ public:
             anExpectedResult = f(angle);
             
             // equals 1.9 at maximun => divide by 3.61 to have it normalise error
-            anAverageDeviation += (aPrediction - anExpectedResult) * (aPrediction - anExpectedResult) / 3.61;
-//            anAverageDeviation += abs(aPrediction - anExpectedResult)/1.8;
+            anAverageDeviation += (aPrediction - anExpectedResult) * (aPrediction - anExpectedResult) / 3.24;
+            
+//            anAverageDeviation += abs(aPrediction - anExpectedResult)/1.9;
         }
         anAverageDeviation *= 1.0/36.0;
-
-        
         return 1.0 - (anAverageDeviation);
     };
     
     static float f(float x) {
-        return sin(x) * 0.9;
+        return (cos(x)) * 0.9;
     }
 };

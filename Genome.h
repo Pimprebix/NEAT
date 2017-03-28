@@ -21,7 +21,7 @@ public:
     void printCPP() const;
     
     // sorting
-    void sortConnectionByInnovationNumber();
+    void sortConnectionById();
     void sortAllNodes();
     
     // setters
@@ -32,11 +32,12 @@ public:
     map<int, NodeGene> getNodeMap() const;
     
     // add elements to Genome
-    void addConnection(ConnectionGene iCon);
     void addNode(NodeGene iNode, int insertAfterNode=-1);
+    void addConnection(ConnectionGene iConnection, int insertAfterConnection=-1);
+    bool areNodesAlreadyConnected(int a, int b) const;
     
-    ConnectionGene& getConnectionFromInnovationNumber(int nb);
-    ConnectionGene getCopyConnectionFromInnovationNumber(int nb) const;
+    ConnectionGene& getConnectionFromId(int nb);
+    ConnectionGene getCopyConnectionFromId(int nb) const;
     static float getDistance(const Genome&  iGenome1, const Genome& iGenome2);    
     static void getTopologicalComparision(const Genome&  iGenome1, 
                                             const Genome& iGenome2, 
@@ -48,27 +49,14 @@ public:
     
     // runs network!
     vector<float> execute(const vector<float>& input);
-
-    
-    // MUTATIONS
-    // pointMutate modifies a weight radomly or according to a step
-    void pointMutate();
-    // nodeMutate silence a connection and adds a connection between the 2 nodes adding 1 new intermediary node 
-    void nodeMutate();
-    // enable or disable connection
-    void enableDisableMutate();
-    // ConnectionCreate creates a connection between 2 nodes
-    void createConnection();
-    // crossover
-    static Genome crossOver(const Genome& fitest, const Genome& weakest, bool equal = false);    
     
     // attributes
     int _id;
     float _fitness;
     float _adjustedFitness;
     
-private:
-    int _maxInnovationNumber;
+//private:
+    int _maxId;
     
     // collections of Ids:
     vector<int> _biasLayer; 
@@ -81,30 +69,36 @@ private:
     vector<ConnectionGene> _connections; 
     
     // check if a node has connection or exists
-    bool hasConnectionWithNodeId(int aNodeId) const;
+//    bool hasConnectionWithNodeId(int aNodeId) const;
     bool hasConnectionId(int aConId) const;
     bool isNodeRegistered(int aNodeId) const;
 };
 
-inline void Genome::addConnection(ConnectionGene iCon) {
-    _connections.push_back(iCon);
-};
-
-inline ConnectionGene& Genome::getConnectionFromInnovationNumber(int aConId) {    
+inline void Genome::addConnection(ConnectionGene iCon, int aConId) {
     auto it = find_if(
             _connections.begin(), 
             _connections.end(), 
             [aConId] (const ConnectionGene& aConnnectionGene) { 
-                    return aConnnectionGene._innovationNumber == aConId;});
+                    return aConnnectionGene._id == aConId;});
+    if (it!=_connections.end()) {it++;}
+    _connections.insert(it, iCon); // insert at the end by default
+};
+
+inline ConnectionGene& Genome::getConnectionFromId(int aConId) {    
+    auto it = find_if(
+            _connections.begin(), 
+            _connections.end(), 
+            [aConId] (const ConnectionGene& aConnnectionGene) { 
+                    return aConnnectionGene._id == aConId;});
     return *it;
 };
 
-inline ConnectionGene Genome::getCopyConnectionFromInnovationNumber(int aConId) const {    
+inline ConnectionGene Genome::getCopyConnectionFromId(int aConId) const {    
     auto it = find_if(
             _connections.begin(), 
             _connections.end(), 
             [aConId] (const ConnectionGene& aConnnectionGene) { 
-                    return aConnnectionGene._innovationNumber == aConId;});
+                    return aConnnectionGene._id == aConId;});
     ConnectionGene aCon = (*it);
     return aCon;
 };
@@ -114,7 +108,6 @@ inline map<int, NodeGene> Genome::getNodeMap() const {
 };
 
 inline bool Genome::isNodeRegistered(int iNodeId) const {
-//    auto it = std::find(_nodes.begin(), _nodes.end(), iNodeId)
     return std::find(_allNodes.begin(), _allNodes.end(), iNodeId) != _allNodes.end();
 };
 
@@ -168,8 +161,8 @@ inline float Genome::getDistance(const Genome&  iGenome1, const Genome& iGenome2
     float N = float(max(iGenome1._connections.size(), iGenome2._connections.size()));
     float W = 0.0;
     for (int innovNber : commonGenes) {
-        W += iGenome1.getCopyConnectionFromInnovationNumber(innovNber)._weight;
-        W -= iGenome2.getCopyConnectionFromInnovationNumber(innovNber)._weight;
+        W += iGenome1.getCopyConnectionFromId(innovNber)._weight;
+        W -= iGenome2.getCopyConnectionFromId(innovNber)._weight;
     }
     W = abs( W / float(commonGenes.size()) );
     
@@ -186,7 +179,7 @@ inline float Genome::getDistance(const Genome&  iGenome1, const Genome& iGenome2
     return aReturnedDistance;
 };
 
-inline void Genome::sortConnectionByInnovationNumber() {
+inline void Genome::sortConnectionById() {
     std::sort(_connections.begin(),
         _connections.end());
 };
@@ -198,31 +191,42 @@ inline void Genome::getTopologicalComparision(const Genome&  iGenome1,
                                         vector<int>& disjointInGenome2,
                                         vector<int>& excessInGenome1,
                                         vector<int>& excessInGenome2) {
-    int minMaxInnovNumber = min(iGenome1._maxInnovationNumber, iGenome2._maxInnovationNumber);
+    int minMaxInnovNumber = min(iGenome1._maxId, iGenome2._maxId);
     
     for (const ConnectionGene& aCon: iGenome1._connections) {  
         // check if it's common
-        if (iGenome2.hasConnectionId(aCon._innovationNumber)) {
-            commonGenes.push_back(aCon._innovationNumber);
+        if (iGenome2.hasConnectionId(aCon._id)) {
+            commonGenes.push_back(aCon._id);
         }
-        else if (aCon._innovationNumber < minMaxInnovNumber) {
-            disjointInGenome1.push_back(aCon._innovationNumber);
+        else if (aCon._id < minMaxInnovNumber) {
+            disjointInGenome1.push_back(aCon._id);
         }
         else {
-            excessInGenome1.push_back(aCon._innovationNumber);
+            excessInGenome1.push_back(aCon._id);
         }
     }
     
     for (const ConnectionGene& aCon: iGenome2._connections) {  
-        if (std::find(commonGenes.begin(), commonGenes.end(), aCon._innovationNumber) == commonGenes.end()) {
-            if (aCon._innovationNumber < minMaxInnovNumber) {
-                disjointInGenome2.push_back(aCon._innovationNumber);
+        if (std::find(commonGenes.begin(), commonGenes.end(), aCon._id) == commonGenes.end()) {
+            if (aCon._id < minMaxInnovNumber) {
+                disjointInGenome2.push_back(aCon._id);
             }
             else {
-                excessInGenome2.push_back(aCon._innovationNumber);
+                excessInGenome2.push_back(aCon._id);
             }
         }
     }
+};
+
+inline bool Genome::areNodesAlreadyConnected(int a, int b) const {
+    auto it = find_if(
+        _connections.begin(), 
+        _connections.end(), 
+        [a, b] (const ConnectionGene& aConnnectionGene) { 
+                return (aConnnectionGene._inputNodeId == a && aConnnectionGene._outputNodeId == b) 
+                || (aConnnectionGene._inputNodeId == b && aConnnectionGene._outputNodeId == a);
+                });
+    return it != _connections.end();
 };
 
 inline void Genome::getNewId() {

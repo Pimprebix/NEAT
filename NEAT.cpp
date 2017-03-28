@@ -15,6 +15,7 @@ void NEAT::initialize() {
     // create wanted numbers of genomes with minimal topology within one species
     Species aSpecies;
     Genome aModel(_nbInput, _nbOutput);
+//    for (int i=0; i<Settings::TARGET_SPECIES_SIZE; i++) {
     for (int i=0; i<Settings::POPULATION_SIZE; i++) {
         Genome aGenome = aModel;
         aGenome.getNewId();
@@ -24,14 +25,24 @@ void NEAT::initialize() {
     _species.push_back(aSpecies);
 }
 
-void NEAT::assignToSpecies(Genome iGenome) {
-    for (Species& aSpecies : _species) {
-        if (aSpecies.testGenomeForSpecies(iGenome)) {
-            aSpecies.addGenome(iGenome);
-            return;
+void NEAT::assignToSpecies(Genome iGenome, int iDefaultSpeciesId) {
+    if ((rand() / (float) (RAND_MAX)) < Settings::ADOPTION_RATE) {
+//        cerr << "genome is poposed to adoption" << endl;
+        std::random_shuffle(_species.begin(), _species.end());
+        for (Species& aSpecies : _species) {
+            if (aSpecies.testGenomeForSpecies(iGenome)) {
+                aSpecies.addGenome(iGenome);
+//                cerr <<"offspring adopted." << endl;
+                return;
+            }
         }
+//        cerr <<"new species" << endl;
+        Species aNewSpecies;
+        aNewSpecies.addGenome(iGenome);
+        _species.push_back(aNewSpecies);
     }
-    Species aNewSpecies;
-    aNewSpecies.addGenome(iGenome);
-    _species.push_back(aNewSpecies);
+    else {
+//        cerr <<"offspring nursed." << endl;
+        getSpeciesById(iDefaultSpeciesId).addGenome(iGenome);
+    }
 };

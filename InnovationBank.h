@@ -5,12 +5,13 @@
 #include <map>
 #include <utility>
 #include <tuple>
+#include "IDGenerator.h"
 
 class InnovationBank {
 public:
     static InnovationBank* instance ();
-    int getInnovationNumber ();
-    std::tuple<int, int, int> getInnovationNumbersAndNodeId(int inputId, int outputId);
+//    int getId ();
+    std::tuple<int, int, int> getIdsAndNodeId(int inputId, int outputId);
     bool isInnovationNew(int inputId, int outputId);
     void registerInnovation(int inputId, int outputId, int nodeId, int inputConnectionId, int outputConnectionId);
     void resetBank();
@@ -32,19 +33,24 @@ inline void InnovationBank::registerInnovation(int inputId, int outputId, int ne
     _innovationMap.insert(std::make_pair(aIdPair, aTuple));
 };
 
-inline std::tuple<int, int, int> InnovationBank::getInnovationNumbersAndNodeId(int inputId, int outputId) {
+inline std::tuple<int, int, int> InnovationBank::getIdsAndNodeId(int inputId, int outputId) {
     std::pair<int, int> aIdPair = std::make_pair(inputId, outputId);
     if (!isInnovationNew(inputId,outputId)) {
         return _innovationMap[aIdPair];
     }
     else {
-        return std::make_tuple(-1,-1,-1);
+        IDGenerator* aIdGenerator = IDGenerator::instance();
+        int aNewNodeId = aIdGenerator->getId();
+        int aNewConnectionId_1 = aIdGenerator->getId();
+        int aNewConnectionId_2 = aIdGenerator->getId();
+        registerInnovation(inputId, outputId, aNewNodeId, aNewConnectionId_1, aNewConnectionId_2);
+        return std::make_tuple(aNewNodeId,aNewConnectionId_1,aNewConnectionId_2);
     }
 };
 
-inline int InnovationBank::getInnovationNumber() {
-    return _id++; 
-};
+//inline int InnovationBank::getId() {
+//    return _id++; 
+//};
 
 
 

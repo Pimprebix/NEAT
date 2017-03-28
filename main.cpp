@@ -13,21 +13,20 @@ int main(int argc, char **argv)
     aNeat.setFitnessFunction(&Game::evalSolution);
     aNeat.run();
     Genome g = aNeat.getBest();
-//    aNeat.getBest();
 
-//    aNeat.run();   
-//    g.display();
-//
-//
     float angle;
     float aPrediction;
     float anExpectedResult;
-    for (int i = 0; i < 360; i++) {
-        angle = float(i - 180) * 3.14159265359/180.; 
+    for (int i = 0; i < 36; i++) {
+        angle = float(i*10 - 180) * 3.14159265359/180.; 
         aPrediction = g.execute({angle}).at(0);
         anExpectedResult = Game::f(angle);
-        cerr << aPrediction << endl;
+        
+        cerr << aPrediction << " / " << abs(aPrediction - anExpectedResult) << endl;
     }
+	return 0;
+};
+
     
 //    cerr << " ************ " << endl;
 //    
@@ -75,5 +74,3 @@ int main(int argc, char **argv)
     // crossOver:
     // more complex: needs to align the 2 genomes by innovation number (so needs a copy and sort)
     
-	return 0;
-};
